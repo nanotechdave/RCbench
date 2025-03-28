@@ -6,7 +6,7 @@ extensions = [
     Extension("rcbench.tasks.c_metrics", ["rcbench/tasks/c_metrics.pyx"], include_dirs=[numpy.get_include()])
 ]
 
-with open("rcbench/README.md", "r") as f:
+with open("RCbench/README.md", "r") as f:
     long_description = f.read()
 
 setup(

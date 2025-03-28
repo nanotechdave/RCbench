@@ -3,8 +3,7 @@ from Cython.Build import cythonize
 import numpy
 
 extensions = [
-    Extension("rcbench.tasks.c_metrics", ["rcbench/tasks/c_metrics.pyx"],
-              include_dirs=[numpy.get_include()])
+    Extension("rcbench.tasks.c_metrics", ["rcbench/tasks/c_metrics.pyx"])
 ]
 
 with open("RCbench/README.md", "r") as f:
@@ -14,8 +13,8 @@ setup(
     name="rcbench",
     version="0.0.10",
     description="Reservoir computing benchmark toolkit",
-    package_dir={"":"rcbench"},
-    packages=find_packages(where="rcbench"),
+    #package_dir={"":"rcbench"},
+    packages=find_packages(),
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/nanotechdave/RCbench",

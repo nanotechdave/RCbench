@@ -1,7 +1,7 @@
 # RCbench - Reservoir Computing Benchmark Toolkit
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-GPLv3-blue)
 ![Cython](https://img.shields.io/badge/built%20with-Cython-orange)
 
 **RCbench (Reservoir Computing Benchmark Toolkit)** is a flexible, efficient, and easy-to-use Python package designed to help you perform and analyze reservoir computing tasks. It features built-in support for key benchmarks such as Nonlinear Transformation (NLT), Memory Capacity (MC), and custom reservoir computing tasks.

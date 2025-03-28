@@ -1,8 +1,8 @@
 Metadata-Version: 2.1
-Name: rcda
+Name: rcbench
 Version: 0.0.10
-Summary: Physical reservoir computing benchmark toolkit
-Home-page: https://github.com/nanotechdave/RCDA
+Summary: Reservoir computing benchmark toolkit
+Home-page: https://github.com/nanotechdave/RCbench
 Author: Davide Pilati
 Author-email: davide.pilati@polito.it
 License: MIT
@@ -12,7 +12,7 @@ Classifier: Programming Language :: Python :: 3.9
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
-License-File: LICENSE.txt
+License-File: LICENSE
 
 # RCDA - Reservoir Computing Data Analysis Toolkit
 

@@ -7,7 +7,7 @@ extensions = [
               include_dirs=[numpy.get_include()])
 ]
 
-with open("rcbench/README.md", "r") as f:
+with open("RCbench/README.md", "r") as f:
     long_description = f.read()
 
 setup(

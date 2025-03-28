@@ -4,9 +4,9 @@ from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
 from sklearn.decomposition import PCA
 
-from rcda.tasks.baseevaluator import BaseEvaluator
+from rcbench.tasks.baseevaluator import BaseEvaluator
 
-from rcda.logger import get_logger
+from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
 

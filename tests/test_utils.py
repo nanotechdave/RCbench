@@ -1,4 +1,4 @@
-from rcda.utils.utils import train_test_split_time_series
+from rcbench.utils.utils import train_test_split_time_series
 import numpy as np
 
 def test_train_test_split_time_series() -> None:

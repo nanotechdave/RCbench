@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
-from rcda.tasks.baseevaluator import BaseEvaluator
-from rcda.logger import get_logger
+from rcbench.tasks.baseevaluator import BaseEvaluator
+from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
 

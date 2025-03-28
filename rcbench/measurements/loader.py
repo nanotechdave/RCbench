@@ -1,6 +1,6 @@
 import pandas as pd
-from rcda.measurements.dataset import ReservoirDataset
-from rcda.logger import get_logger
+from rcbench.measurements.dataset import ReservoirDataset
+from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
 class MeasurementLoader:

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from rcda.logger import get_logger
+from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
 class ReservoirDataset:

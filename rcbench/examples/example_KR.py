@@ -1,10 +1,10 @@
 import logging
 from pathlib import Path
 
-from rcda.measurements.loader import MeasurementLoader
-from rcda.measurements.parser import MeasurementParser
-from rcda.tasks.kernelrank import KernelRankEvaluator
-from rcda.logger import get_logger
+from rcbench.measurements.loader import MeasurementLoader
+from rcbench.measurements.parser import MeasurementParser
+from rcbench.tasks.kernelrank import KernelRankEvaluator
+from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
 logger.setLevel(logging.INFO) #use 25 for output only, use logging.INFO for output and INFO 

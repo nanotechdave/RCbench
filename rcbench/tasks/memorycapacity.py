@@ -4,8 +4,8 @@ import numpy as np
 from sklearn.linear_model import Ridge
 from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.decomposition import PCA
-from rcda.tasks.baseevaluator import BaseEvaluator
-from rcda.logger import get_logger
+from rcbench.tasks.baseevaluator import BaseEvaluator
+from rcbench.logger import get_logger
 from rcda.tasks.c_metrics import evaluate_mc
 
     

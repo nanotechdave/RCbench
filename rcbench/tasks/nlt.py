@@ -6,9 +6,9 @@ from sklearn.decomposition import PCA
 from scipy.signal import sawtooth
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
-from rcda.tasks.baseevaluator import BaseEvaluator
-from rcda.visualization.nlt_plotter import plot_nlt_prediction
-from rcda.logger import get_logger
+from rcbench.tasks.baseevaluator import BaseEvaluator
+from rcbench.visualization.nlt_plotter import plot_nlt_prediction
+from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
 class NltEvaluator(BaseEvaluator):

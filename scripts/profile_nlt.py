@@ -1,7 +1,7 @@
 import cProfile
-from rcda.measurements.loader import MeasurementLoader
-from rcda.measurements.parser import MeasurementParser
-from rcda.tasks.nlt import NltEvaluator
+from rcbench.measurements.loader import MeasurementLoader
+from rcbench.measurements.parser import MeasurementParser
+from rcbench.tasks.nlt import NltEvaluator
 from pathlib import Path
 # Load and parse your real measurement data
 BASE_DIR = Path(__file__).resolve().parent

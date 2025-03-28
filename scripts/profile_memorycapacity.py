@@ -1,7 +1,7 @@
 import cProfile
-from rcda.measurements.loader import MeasurementLoader
-from rcda.measurements.parser import MeasurementParser
-from rcda.tasks.memorycapacity import MemoryCapacityEvaluator
+from rcbench.measurements.loader import MeasurementLoader
+from rcbench.measurements.parser import MeasurementParser
+from rcbench.tasks.memorycapacity import MemoryCapacityEvaluator
 from pathlib import Path
 # Update the path to your measurement file
 BASE_DIR = Path(__file__).resolve().parent

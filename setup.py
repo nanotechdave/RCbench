@@ -3,7 +3,7 @@ from Cython.Build import cythonize
 import numpy
 
 extensions = [
-    Extension("rcbench.tasks.c_metrics", ["rcbench/tasks/c_metrics.pyx"])
+    Extension("rcbench.tasks.c_metrics", ["rcbench/tasks/c_metrics.pyx"], include_dirs=[numpy.get_include()])
 ]
 
 with open("RCbench/README.md", "r") as f:

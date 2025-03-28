@@ -1,0 +1,8 @@
+#!/bin/bash
+rm -rf build dist *.egg-info
+find rcda -name '*.so' -delete
+find rcda -name '*.c' -delete
+find rcda -name '*.cpp' -delete
+find . -type d -name '__pycache__' -exec rm -rf {} +
+
+echo "🧹 Cleanup complete!"

@@ -3,24 +3,34 @@ import numpy as np
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
 from sklearn.decomposition import PCA
-
+from typing import Dict, Union, Optional, Any, List, Tuple
 from rcbench.tasks.baseevaluator import BaseEvaluator
-
 from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
 
-def generate_narma_target(u, order=10, coefficients = {'alpha':0.4, 'beta':0.4, 'gamma':0.6, 'delta':0.1}):
+def generate_narma_target(u: Union[np.ndarray, List[float]], 
+                          order: int = 10, 
+                          coefficients: Dict[str, float] = {'alpha':0.4, 
+                                                            'beta':0.4, 
+                                                            'gamma':0.6, 
+                                                            'delta':0.1},
+                          ) -> np.ndarray:
     """
-    Generates the NARMA target series from an input signal u using a NARMA-10 formulation.
+    Generates the NARMA target series from an input signal u using a NARMA-N formulation.
     
-    The NARMA-10 system is defined by:
-        y[t+1] = 0.3 * y[t] + 0.05 * y[t] * (sum_{i=0}^{order-1} y[t-i]) 
-                 + 1.5 * u[t-order] * u[t] + 0.1
+    The NARMA-N system is defined by:
+        y[t+1] = alpha * y[t] + beta * y[t] * (sum_{i=0}^{order-1} y[t-i]) 
+                 + gamma * u[t-order] * u[t] + delta
+
+    The NARMA-2 is instead defined by:
+        y[t] = alpha * y[t-1] + beta * y[t-1] * y[t-2] 
+                + gamma * (u[t-1])**3 + delta
                  
     Parameters:
         u (array-like): Input signal.
         order (int): Order of the NARMA system (default is 10).
+        coefficients (dict) : alpha, beta, gamma, delta definition.
     
     Returns:
         np.ndarray: The generated NARMA target series.
@@ -55,7 +65,10 @@ def generate_narma_target(u, order=10, coefficients = {'alpha':0.4, 'beta':0.4, 
                         delta)
     return y
 
-def normalize_to_range(u, new_min=0.0, new_max=0.5):
+def normalize_to_range(u: Union[np.ndarray, List[float]], 
+                       new_min: float = 0.0, 
+                       new_max: float = 0.5,
+                       ) -> np.ndarray:
     u = np.asarray(u)
     u_min = np.min(u)
     u_max = np.max(u)
@@ -65,7 +78,16 @@ def normalize_to_range(u, new_min=0.0, new_max=0.5):
     return (u - u_min) / (u_max - u_min) * (new_max - new_min) + new_min
 
 class NarmaEvaluator(BaseEvaluator):
-    def __init__(self, input_signal, nodes_output, order=2, alpha=0.4, beta=0.4, gamma=0.6, delta=0.1):
+    def __init__(
+        self,
+        input_signal: Union[np.ndarray, List[float]],
+        nodes_output: np.ndarray,
+        order: int = 2,
+        alpha: float = 0.4,
+        beta: float = 0.4,
+        gamma: float = 0.6,
+        delta: float = 0.1
+    ) -> None:
         """
         Initializes the NARMA evaluator.
 
@@ -76,13 +98,17 @@ class NarmaEvaluator(BaseEvaluator):
             order (int): The order of the NARMA system (default is 10).
             coefficients (dict): coefficients for the NARMA equation.
         """
-        self.input_signal = input_signal
-        self.nodes_output = nodes_output
-        self.order = order
-        self.coefficients = {'alpha' : alpha, 'beta' : beta, 'gamma' : gamma, 'delta' : delta}
-        self.targets = self.target_generator()
+        self.input_signal: np.ndarray = np.asarray(input_signal)
+        self.nodes_output: np.ndarray = nodes_output
+        self.order: int = order
+        self.coefficients: Dict[str, float] = {'alpha': alpha,
+                                               'beta': beta,
+                                               'gamma': gamma,
+                                               'delta': delta,
+                                               }
+        self.targets: Dict[str, np.ndarray] = self.target_generator()
 
-    def target_generator(self):
+    def target_generator(self) -> Dict[str, np.ndarray]:
         """
         Generates the NARMA target based on the provided input signal.
         Returns a dictionary with key 'narma' mapping to the target series.
@@ -90,7 +116,12 @@ class NarmaEvaluator(BaseEvaluator):
         target = generate_narma_target(self.input_signal, self.order, self.coefficients)
         return {'narma': target}
     
-    def set_coefficients(self, alpha = 0.4, beta = 0.4, gamma = 0.6, delta = 0.1):
+    def set_coefficients(self,
+                         alpha: float = 0.4,
+                         beta: float = 0.4,
+                         gamma: float = 0.6,
+                         delta: float = 0.1
+                         ) -> None:
         """
         Sets coefficient for the generation of a NARMA target.
         """
@@ -101,7 +132,11 @@ class NarmaEvaluator(BaseEvaluator):
         self.coefficients['delta'] = delta
         
 
-    def evaluate_metric(self, y_true, y_pred, metric='NMSE'):
+    def evaluate_metric(self, 
+                        y_true: np.ndarray, 
+                        y_pred: np.ndarray, 
+                        metric: str = 'NMSE'
+                        ) -> float:
         """
         Evaluates the performance using the specified metric.
         Supported metrics: 'NMSE', 'RNMSE', and 'MSE'.
@@ -116,12 +151,13 @@ class NarmaEvaluator(BaseEvaluator):
             raise ValueError("Unsupported metric: choose 'NMSE', 'RNMSE', or 'MSE'")
 
     def run_evaluation(self,
-                       metric='NMSE',
-                       feature_selection_method='kbest',
-                       num_features='all',
-                       regression_alpha=1.0,
-                       train_ratio=0.8,
-                       plot=False):
+                       metric: str ='NMSE',
+                       feature_selection_method: str ='kbest',
+                       num_features: Union[int, str]='all',
+                       regression_alpha: float =1.0,
+                       train_ratio: float =0.8,
+                       plot: bool = False,
+                       ) -> Dict[str, Any]:
         """
         Runs the NARMA evaluation task. It splits the data into training and testing sets,
         performs feature selection, trains a regression model (Ridge), and returns the evaluation results.

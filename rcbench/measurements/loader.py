@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from typing import List
 from rcbench.measurements.dataset import ReservoirDataset
 from rcbench.logger import get_logger
 
@@ -8,8 +9,8 @@ class MeasurementLoader:
     def __init__(self, file_path: str):
         self.file_path = file_path
         self.dataframe: pd.DataFrame = None
-        self.voltage_columns: list = []
-        self.current_columns: list = []
+        self.voltage_columns: List = []
+        self.current_columns: List = []
         self.time_column: str = 'Time[s]'
 
     def load_data(self) -> pd.DataFrame:

@@ -1,20 +1,22 @@
 import numpy as np
 import pandas as pd
 import re
+from typing import List, Tuple, Dict
 from rcbench.logger import get_logger
+from rcbench.measurements.dataset import ReservoirDataset
 
 logger = get_logger(__name__)
 class MeasurementParser:
     
-    def __init__(self, dataset, ground_threshold=1e-2):
+    def __init__(self, dataset: ReservoirDataset, ground_threshold: float = 1e-2):
         """
         Parses measurement data to identify input electrodes (voltage signals
         associated with non-nan current measurements) and ground electrodes 
         (non-nan current, voltage steadily close to zero).
         """
-        self.dataset = dataset
-        self.dataframe = dataset.dataframe
-        self.time = dataset.time
+        self.dataset: ReservoirDataset = dataset
+        self.dataframe: pd.DataFrame = dataset.dataframe
+        self.time: np.ndarray = dataset.time
 
         # Extract only the columns that still exist after cleaning
         self.voltage_cols = [col for col in self.dataframe.columns if col.endswith('_V[V]')]
@@ -28,7 +30,7 @@ class MeasurementParser:
         logger.info(f"Total node voltages: {len(self.node_electrodes)}")
 
 
-    def _find_input_and_ground(self, ground_threshold):
+    def _find_input_and_ground(self, ground_threshold: float) -> Tuple[List[str], List[str]]:
         input_electrodes = []
         ground_electrodes = []
 
@@ -57,7 +59,7 @@ class MeasurementParser:
 
         return input_electrodes, ground_electrodes
 
-    def _identify_nodes(self):
+    def _identify_nodes(self) -> List[str]:
         exclude = set(self.input_electrodes + self.ground_electrodes)
         node_electrodes = []
 
@@ -70,23 +72,23 @@ class MeasurementParser:
 
         return list(set(node_electrodes))
 
-    def get_input_voltages(self):
+    def get_input_voltages(self) -> Dict[str, np.ndarray]:
         return {elec: self.dataframe[f'{elec}_V[V]'].values for elec in self.input_electrodes}
 
-    def get_input_currents(self):
+    def get_input_currents(self) -> Dict[str, np.ndarray]:
         return {elec: self.dataframe[f'{elec}_I[A]'].values for elec in self.input_electrodes}
 
-    def get_ground_voltages(self):
+    def get_ground_voltages(self) -> Dict[str, np.ndarray]:
         return {elec: self.dataframe[f'{elec}_V[V]'].values for elec in self.ground_electrodes}
 
-    def get_ground_currents(self):
+    def get_ground_currents(self) -> Dict[str, np.ndarray]:
         return {elec: self.dataframe[f'{elec}_I[A]'].values for elec in self.ground_electrodes}
 
-    def get_node_voltages(self):
+    def get_node_voltages(self) -> np.ndarray:
         cols = [f'{elec}_V[V]' for elec in self.node_electrodes]
         return self.dataframe[cols].values
 
-    def summary(self):
+    def summary(self) -> Dict:
         return {
             'input_electrodes': self.input_electrodes,
             'ground_electrodes': self.ground_electrodes,

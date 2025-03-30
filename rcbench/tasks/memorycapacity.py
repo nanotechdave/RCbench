@@ -201,7 +201,7 @@ class MemoryCapacityEvaluator(BaseEvaluator):
             )
         
         if plot_config.plot_feature_importance and self.selected_features is not None:
-            # We now have the actual electrode names
+            # Use the actual electrode names
             feature_names = self.selected_feature_names
             
             # Get feature importance from the feature selector
@@ -209,6 +209,11 @@ class MemoryCapacityEvaluator(BaseEvaluator):
             
             # Get importance scores for selected features
             importance_scores = np.array([feature_importance[name] for name in feature_names])
+            
+            # Log importance scores for reference
+            logger.info("Selected electrodes and their importance scores:")
+            for name, score in zip(feature_names, importance_scores):
+                logger.info(f"  {name}: {score:.4f}")
             
             self.plotter.plot_feature_importance(
                 importance_scores,

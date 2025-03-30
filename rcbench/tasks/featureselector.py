@@ -115,6 +115,9 @@ class FeatureSelector:
         if num_features == 'all':
             num_features = X.shape[1]
         
+        # Log electrode names
+        logger.debug(f"PCA feature selection with electrodes: {electrode_names}")
+        
         # Create DataFrame with electrode names as columns
         X_df = pd.DataFrame(X, columns=electrode_names)
         
@@ -159,8 +162,8 @@ class FeatureSelector:
         # Create feature importance Series
         self.feature_importance = pd.Series(loadings, index=electrode_names)
         
-        # Log the selected electrodes
-        logger.info(f"Selected electrodes: {self.selected_feature_names}")
+        # Log selected electrodes
+        logger.info(f"Selected electrodes using PCA: {self.selected_feature_names}")
         
         # Return selected features
         X_selected = X[:, self.selected_features]

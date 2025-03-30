@@ -2,6 +2,7 @@ import numpy as np
 from scipy.spatial.distance import pdist, squareform
 from rcbench.tasks.baseevaluator import BaseEvaluator
 from rcbench.logger import get_logger
+from typing import Tuple, Dict, Any
 
 logger = get_logger(__name__)
 
@@ -27,13 +28,18 @@ class KernelRankEvaluator(BaseEvaluator):
             Relative threshold for counting eigenvalues (eigenvalues > threshold*max_eigenvalue are counted).
             Default is 1e-6.
     """
-    def __init__(self, nodes_output, kernel='linear', sigma=1.0, threshold=1e-6):
-        self.nodes_output = nodes_output
-        self.kernel = kernel
-        self.sigma = sigma
-        self.threshold = threshold
+    def __init__(self, 
+                 nodes_output: np.ndarray, 
+                 kernel: str = 'linear', 
+                 sigma: str = 1.0, 
+                 threshold: str = 1e-6,
+                 ) -> None:
+        self.nodes_output: np.ndarray = nodes_output
+        self.kernel: str = kernel
+        self.sigma: float = sigma
+        self.threshold: float = threshold
 
-    def compute_kernel_matrix(self):
+    def compute_kernel_matrix(self) -> np.ndarray:
         """
         Computes the kernel (Gram) matrix from the reservoir states.
         
@@ -52,7 +58,7 @@ class KernelRankEvaluator(BaseEvaluator):
             raise ValueError("Unsupported kernel type. Please use 'linear' or 'rbf'.")
         return K
 
-    def compute_kernel_rank(self):
+    def compute_kernel_rank(self) -> Tuple[int, np.ndarray]:
         """
         Computes the effective kernel rank based on the eigenvalues of the kernel matrix.
         
@@ -67,7 +73,7 @@ class KernelRankEvaluator(BaseEvaluator):
         effective_rank = np.sum(eigenvalues > (self.threshold * max_eig))
         return effective_rank, eigenvalues
 
-    def run_evaluation(self):
+    def run_evaluation(self) -> Dict[str, Any]:
         """
         Runs the kernel rank evaluation.
         

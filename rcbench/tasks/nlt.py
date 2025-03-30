@@ -9,10 +9,16 @@ from scipy.signal import find_peaks
 from rcbench.tasks.baseevaluator import BaseEvaluator
 from rcbench.visualization.nlt_plotter import plot_nlt_prediction
 from rcbench.logger import get_logger
+from typing import Dict, List, Union, Any, Tuple
 
 logger = get_logger(__name__)
 class NltEvaluator(BaseEvaluator):
-    def __init__(self, input_signal, nodes_output, time_array, waveform_type='sine'):
+    def __init__(self, 
+                 input_signal: Union[np.ndarray, List[float]], 
+                 nodes_output: np.ndarray, 
+                 time_array: Union[np.ndarray, List[float]], 
+                 waveform_type: str = 'sine',
+                 ) -> None:
         """
         Initializes the NLT evaluator.
         """
@@ -20,11 +26,14 @@ class NltEvaluator(BaseEvaluator):
         self.nodes_output = nodes_output
         self.time = time_array
         self.waveform_type = waveform_type
-        self.targets = self.target_generator()
-        self.electrode_names = [f'el_{i}' for i in range(nodes_output.shape[1])]
+        self.targets: Dict[str, np.ndarray] = self.target_generator()
+        self.electrode_names: List[str] = [f'el_{i}' for i in range(nodes_output.shape[1])]
 
         
-    def _estimate_phase_from_maxima(self, signal, time):
+    def _estimate_phase_from_maxima(self, 
+                                    signal: np.ndarray, 
+                                    time: np.ndarray,
+                                    ) -> Tuple[np.ndarray, float]:
         """
         Estimate phase based on time between local maxima.
         Returns a phase vector aligned with the input waveform.
@@ -59,7 +68,7 @@ class NltEvaluator(BaseEvaluator):
 
         return np.unwrap(phase), freq
 
-    def target_generator(self, preserve_scale=True):
+    def target_generator(self, preserve_scale: bool = True) -> Dict[str, np.ndarray]:
         """
         Generate nonlinear targets aligned with waveform maxima.
         """
@@ -99,7 +108,11 @@ class NltEvaluator(BaseEvaluator):
 
         return targets
 
-    def evaluate_metric(self, y_true, y_pred, metric='NMSE'):
+    def evaluate_metric(self, 
+                        y_true: np.ndarray, 
+                        y_pred: np.ndarray, 
+                        metric: str = 'NMSE',
+                        ) -> float:
         if metric == 'NMSE':
             return np.mean((y_true - y_pred) ** 2) / np.var(y_true)
         elif metric == 'RNMSE':
@@ -110,13 +123,14 @@ class NltEvaluator(BaseEvaluator):
             raise ValueError("Unsupported metric: choose 'NMSE', 'RNMSE', or 'MSE'")
 
     def run_evaluation(self,
-                    target_name,
-                    metric='NMSE',
-                    feature_selection_method='kbest',
-                    num_features=None,
-                    regression_alpha=1.0,
-                    train_ratio=0.8,
-                    plot=False):
+                       target_name: str,
+                       metric: str = 'NMSE',
+                       feature_selection_method: str = 'kbest',
+                       num_features: Union[str, int] = 'all',
+                       regression_alpha: float =1.0,
+                       train_ratio: float = 0.8,
+                       plot: bool = False
+                       ) -> Dict[str, Any]:
 
         if target_name not in self.targets:
             raise ValueError(f"Target '{target_name}' not found. Available: {list(self.targets)}")

@@ -1,29 +1,44 @@
 import numpy as np
 import pandas as pd
 import re
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Any, TYPE_CHECKING
 from rcbench.logger import get_logger
-from rcbench.measurements.dataset import ReservoirDataset
+
+# Use TYPE_CHECKING to avoid circular imports at runtime
+if TYPE_CHECKING:
+    from rcbench.measurements.dataset import ReservoirDataset
 
 logger = get_logger(__name__)
+
 class MeasurementParser:
     
-    def __init__(self, dataset: ReservoirDataset, ground_threshold: float = 1e-2):
+    def __init__(self, dataset: 'Any', ground_threshold: float = 1e-2):
         """
         Parses measurement data to identify input electrodes (voltage signals
         associated with non-nan current measurements) and ground electrodes 
         (non-nan current, voltage steadily close to zero).
+        
+        Args:
+            dataset: The ReservoirDataset instance to parse
+            ground_threshold: Threshold for identifying ground electrodes
         """
-        self.dataset: ReservoirDataset = dataset
+        self.dataset = dataset
         self.dataframe: pd.DataFrame = dataset.dataframe
         self.time: np.ndarray = dataset.time
 
         # Extract only the columns that still exist after cleaning
         self.voltage_cols = [col for col in self.dataframe.columns if col.endswith('_V[V]')]
         self.current_cols = [col for col in self.dataframe.columns if col.endswith('_I[A]')]
-
-        self.input_electrodes, self.ground_electrodes = self._find_input_and_ground(ground_threshold)
+        
+        # Handle forced electrodes from the dataset if present
+        if hasattr(dataset, 'forced_input') and hasattr(dataset, 'forced_ground') and dataset.forced_input and dataset.forced_ground:
+            self.input_electrodes = [dataset.forced_input]
+            self.ground_electrodes = [dataset.forced_ground]
+        else:
+            self.input_electrodes, self.ground_electrodes = self._find_input_and_ground(ground_threshold)
+            
         self.node_electrodes = self._identify_nodes()
+        
         logger.info(f"Input electrodes: {self.input_electrodes}")
         logger.info(f"Ground electrodes: {self.ground_electrodes}")
         logger.info(f"Node electrodes: {self.node_electrodes}")
@@ -53,9 +68,11 @@ class MeasurementParser:
                     input_electrodes.append(electrode)
 
         if not input_electrodes:
-            raise ValueError("No input electrodes found.")
+            logger.warning("No input electrodes found.")
+            # Using warning instead of error to allow for special cases
         if not ground_electrodes:
-            raise ValueError("No ground electrodes found.")
+            logger.warning("No ground electrodes found.")
+            # Using warning instead of error to allow for special cases
 
         return input_electrodes, ground_electrodes
 
@@ -88,6 +105,20 @@ class MeasurementParser:
     def get_node_voltages(self) -> np.ndarray:
         cols = [f'{elec}_V[V]' for elec in self.node_electrodes]
         return self.dataframe[cols].values
+    
+    def get_node_voltage(self, node: str) -> np.ndarray:
+        """
+        Get voltage data for a specific node electrode.
+        
+        Args:
+            node (str): Electrode name
+            
+        Returns:
+            np.ndarray: Voltage data for the specified node
+        """
+        if node in self.node_electrodes:
+            return self.dataframe[f'{node}_V[V]'].values
+        raise ValueError(f"Node electrode '{node}' not found.")
 
     def summary(self) -> Dict:
         return {

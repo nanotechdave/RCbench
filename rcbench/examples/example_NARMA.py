@@ -40,8 +40,13 @@ evaluatorNARMA = NarmaEvaluator(input_signal,
                                gamma=0.6, 
                                delta=0.1,
                                )
-resultsNARMA2 = evaluatorNARMA.run_evaluation()
-
+resultsNARMA2 = evaluatorNARMA.run_evaluation(metric='NMSE',
+                                            feature_selection_method='pca',
+                                            num_features='all',
+                                            regression_alpha=0.01,
+                                            train_ratio=0.8,
+                                            plot=True
+                                        )
 logger.output(f"NARMA Analysis for order: {evaluatorNARMA.order}")
 logger.output(f"  - Metric: {resultsNARMA2['metric']}")
 logger.output(f"  - Accuracy: {resultsNARMA2['accuracy']:.5f}\n")

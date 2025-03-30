@@ -28,21 +28,17 @@ input_elec = electrodes_info['input_electrodes'][0]
 input_signal = dataset.get_input_voltages()[input_elec]
 time = dataset.time
 
-# For NLT tasks, we can use input electrodes as state signals
-# Since this dataset doesn't have designated node electrodes, we'll use the input electrodes
-node_electrode_names = electrodes_info['input_electrodes']
-input_voltages = dataset.get_input_voltages()
-
-# Create a matrix of node voltages from the input electrodes
-node_voltages = np.column_stack([input_voltages[elec] for elec in node_electrode_names])
+# Get node voltages (only node electrodes, not input)
+nodes_output = dataset.get_node_voltages()
+electrode_names = electrodes_info['node_electrodes']
 
 # Run NLT evaluation
 evaluatorNLT = NltEvaluator(
     input_signal=input_signal,
-    nodes_output=node_voltages,
+    nodes_output=nodes_output,
     time_array=time,
     waveform_type='sine',  # or 'triangular'
-    electrode_names=node_electrode_names
+    electrode_names=electrode_names
 )
 
 # Run evaluation for each generated target waveform
@@ -52,7 +48,7 @@ for target_name in evaluatorNLT.targets:
         result = evaluatorNLT.run_evaluation(
             target_name=target_name,
             metric='NMSE',
-            feature_selection_method='kbest',
+            feature_selection_method='pca',
             num_features='all',
             regression_alpha=0.01,
             train_ratio=0.8,
@@ -63,7 +59,7 @@ for target_name in evaluatorNLT.targets:
         logger.output(f"NLT Analysis for Target: '{target_name}'")
         logger.output(f"  - Metric: {result['metric']}")
         logger.output(f"  - Accuracy: {result['accuracy']:.5f}")
-        logger.output(f"  - Selected Features Indices: {[node_electrode_names[i] for i in result['selected_features']]}")
+        logger.output(f"  - Selected Features Indices: {[electrode_names[i] for i in result['selected_features']]}")
         logger.output(f"  - Model Weights: {result['model'].coef_}\n")
     except Exception as e:
         logger.error(f"Error evaluating {target_name}: {str(e)}")

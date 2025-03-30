@@ -1,8 +1,7 @@
 import logging
 from pathlib import Path
 
-from rcbench.measurements.loader import MeasurementLoader
-from rcbench.measurements.parser import MeasurementParser
+from rcbench.measurements.dataset import ReservoirDataset
 from rcbench.tasks.sinx import SinxEvaluator
 from rcbench.logger import get_logger
 
@@ -15,22 +14,28 @@ filenameMC = "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
 
 measurement_file_MC = BASE_DIR.parent / "tests" / "test_files" / filenameMC
 
-loaderSinx = MeasurementLoader(measurement_file_MC)
-datasetSinx = loaderSinx.get_dataset()
+# Load the data directly using the ReservoirDataset class
+dataset = ReservoirDataset(measurement_file_MC)
 
-# Automatic parsing
-parserSinx = MeasurementParser(datasetSinx)
+# Get information about the electrodes
+electrodes_info = dataset.summary()
+logger.info(f"Parsed Electrodes: {electrodes_info}")
 
-electrodes_infoSinx = parserSinx.summary()
-logger.info(f"Parsed Electrodes: {electrodes_infoSinx}")
+# Get input and node voltages directly from the dataset
+input_voltages = dataset.get_input_voltages()
+nodes_output = dataset.get_node_voltages()
 
-input_voltages = parserSinx.get_input_voltages()
-nodes_output = parserSinx.get_node_voltages()
-
-primary_input_electrode = electrodes_infoSinx['input_electrodes'][0]
+primary_input_electrode = electrodes_info['input_electrodes'][0]
 input_signal = input_voltages[primary_input_electrode]
 
-evaluatorSinX = SinxEvaluator(input_signal, nodes_output)
+# Get electrode names for the node electrodes
+electrode_names = electrodes_info['node_electrodes']
+
+evaluatorSinX = SinxEvaluator(
+    input_signal=input_signal, 
+    nodes_output=nodes_output,
+    electrode_names=electrode_names
+)
 resultSinX = evaluatorSinX.run_evaluation(
     metric='NMSE',
     feature_selection_method='kbest',

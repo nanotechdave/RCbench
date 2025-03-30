@@ -13,6 +13,7 @@ class SinxEvaluator(BaseEvaluator):
     def __init__(self, 
                  input_signal: Union[np.ndarray, List[float]], 
                  nodes_output: np.ndarray,
+                 electrode_names: Optional[List[str]] = None,
                  ) -> None:
         """
         Initializes the SinxEvaluator for approximating sin(normalized_input).
@@ -20,8 +21,9 @@ class SinxEvaluator(BaseEvaluator):
         Parameters:
         - input_signal (np.ndarray): Random white noise input signal.
         - nodes_output (np.ndarray): Reservoir node voltages (features).
+        - electrode_names (Optional[List[str]]): Names of electrodes for nodes.
         """
-        super().__init__(input_signal, nodes_output)
+        super().__init__(input_signal, nodes_output, electrode_names)
         self.normalized_input = self._normalize_input(self.input_signal)
         self.target = np.sin(self.normalized_input)
 
@@ -65,7 +67,7 @@ class SinxEvaluator(BaseEvaluator):
         X_train, X_test, y_train, y_test = self.split_train_test(X, y, train_ratio)
 
         # Feature selection
-        X_train_sel, selected_features = self.feature_selection(X_train, y_train, feature_selection_method, num_features)
+        X_train_sel, selected_features, _ = self.feature_selection(X_train, y_train, feature_selection_method, num_features)
         if feature_selection_method == 'kbest':
             X_test_sel = X_test[:, selected_features]
         else:

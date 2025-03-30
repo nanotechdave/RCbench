@@ -7,11 +7,24 @@ from rcbench.measurements.loader import MeasurementLoader
 from rcbench.measurements.parser import MeasurementParser
 from rcbench.tasks.memorycapacity import MemoryCapacityEvaluator
 from rcbench.tasks.featureselector import FeatureSelector
+from rcbench.measurements.dataset import ReservoirDataset
+
+
+@pytest.fixture
+def reservoir_dataset():
+    """Load measurement data for testing using the ReservoirDataset class."""
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    filename = "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
+    measurement_file = BASE_DIR / "tests" / "test_files" / filename
+    
+    # Load the data directly using the ReservoirDataset class
+    dataset = ReservoirDataset(measurement_file)
+    return dataset
 
 
 @pytest.fixture
 def measurement_data():
-    """Load measurement data for testing."""
+    """Legacy fixture for backward compatibility - will be deprecated."""
     BASE_DIR = Path(__file__).resolve().parent.parent
     filename = "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
     measurement_file = BASE_DIR / "tests" / "test_files" / filename
@@ -23,7 +36,7 @@ def measurement_data():
 
 @pytest.fixture
 def parsed_data(measurement_data):
-    """Parse measurement data."""
+    """Legacy fixture for backward compatibility - will be deprecated."""
     parser = MeasurementParser(measurement_data)
     return parser
 
@@ -525,33 +538,31 @@ def test_all_electrodes_data_consistency():
     print(f"Looking for test file at: {measurement_file}")
     print(f"File exists: {measurement_file.exists()}")
     
-    # Load the data
-    loader = MeasurementLoader(measurement_file)
-    dataset = loader.get_dataset()
+    # Load the data directly using the ReservoirDataset class
+    dataset = ReservoirDataset(measurement_file)
     
     # Get the raw dataframe directly from the dataset
     raw_df = dataset.dataframe
     print(f"Raw dataframe shape: {raw_df.shape}")
     print(f"Raw dataframe columns (first 5): {list(raw_df.columns)[:5]}")
     
-    # Parse the data
-    parser = MeasurementParser(dataset)
-    electrodes_info = parser.summary()
+    # Get electrode information
+    electrodes_info = dataset.summary()
     node_electrodes = electrodes_info['node_electrodes']
     
     # Skip if no electrodes found
     if not node_electrodes:
-        print("ERROR: No node electrodes found in parser output")
+        print("ERROR: No node electrodes found in dataset output")
         pytest.skip("No node electrodes found")
     
     print(f"Testing data consistency for {len(node_electrodes)} electrodes: {node_electrodes}")
     
     # Get the node output matrix
-    nodes_output = parser.get_node_voltages()
+    nodes_output = dataset.get_node_voltages()
     print(f"Node output matrix shape: {nodes_output.shape}")
     
     # Setup for feature selection
-    input_voltages = parser.get_input_voltages()
+    input_voltages = dataset.get_input_voltages()
     primary_input_electrode = electrodes_info['input_electrodes'][0]
     input_signal = input_voltages[primary_input_electrode]
     
@@ -609,7 +620,7 @@ def test_all_electrodes_data_consistency():
         selected_values = X_selected[:10, selected_idx]
         
         try:
-            # Verify raw dataframe values match parser's node output values
+            # Verify raw dataframe values match node output values
             assert np.allclose(raw_values, node_values, rtol=1e-5, atol=1e-5)
             
             # Verify raw values match selected feature values

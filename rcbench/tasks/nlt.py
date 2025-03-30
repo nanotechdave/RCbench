@@ -19,16 +19,28 @@ class NltEvaluator(BaseEvaluator):
                  nodes_output: np.ndarray, 
                  time_array: Union[np.ndarray, List[float]], 
                  waveform_type: str = 'sine',
+                 electrode_names: List[str] = None,
                  ) -> None:
         """
         Initializes the NLT evaluator.
+        
+        Parameters:
+            input_signal: The input signal array.
+            nodes_output: The reservoir nodes output.
+            time_array: The time values corresponding to signals.
+            waveform_type: Type of waveform, 'sine' (default) or 'triangular'.
+            electrode_names: Optional list of electrode names.
         """
-        self.input_signal = input_signal
-        self.nodes_output = nodes_output
+        # Initialize electrode names if not provided
+        if electrode_names is None:
+            electrode_names = [f'el_{i}' for i in range(nodes_output.shape[1])]
+        
+        # Call the parent class constructor
+        super().__init__(input_signal, nodes_output, electrode_names)
+        
         self.time = time_array
         self.waveform_type = waveform_type
         self.targets: Dict[str, np.ndarray] = self.target_generator()
-        self.electrode_names: List[str] = [f'el_{i}' for i in range(nodes_output.shape[1])]
 
         
     def _estimate_phase_from_maxima(self, 
@@ -145,7 +157,7 @@ class NltEvaluator(BaseEvaluator):
         X_train, X_test, y_train, y_test = self.split_train_test(X, y, train_ratio)
 
         # Feature selection
-        X_train_sel, selected_features = self.feature_selection(
+        X_train_sel, selected_features, _ = self.feature_selection(
             X_train, y_train, feature_selection_method, num_features
         )
         if feature_selection_method == 'kbest':

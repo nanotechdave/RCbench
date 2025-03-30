@@ -83,6 +83,7 @@ class NarmaEvaluator(BaseEvaluator):
         self,
         input_signal: Union[np.ndarray, List[float]],
         nodes_output: np.ndarray,
+        electrode_names: Optional[List[str]] = None,
         order: int = 2,
         alpha: float = 0.4,
         beta: float = 0.4,
@@ -95,12 +96,13 @@ class NarmaEvaluator(BaseEvaluator):
         Parameters:
             input_signal (array-like): The driving input for the NARMA system.
             nodes_output (2D array): The output of the reservoir nodes.
-            time_array (array-like): Array of time stamps.
+            electrode_names (List[str], optional): Names of the electrodes.
             order (int): The order of the NARMA system (default is 10).
-            coefficients (dict): coefficients for the NARMA equation.
+            alpha, beta, gamma, delta (float): coefficients for the NARMA equation.
         """
-        self.input_signal: np.ndarray = np.asarray(input_signal)
-        self.nodes_output: np.ndarray = nodes_output
+        # Call the parent class constructor
+        super().__init__(input_signal, nodes_output, electrode_names)
+        
         self.order: int = order
         self.coefficients: Dict[str, float] = {'alpha': alpha,
                                                'beta': beta,
@@ -182,7 +184,7 @@ class NarmaEvaluator(BaseEvaluator):
         X_train, X_test, y_train, y_test = self.split_train_test(X, y, train_ratio)
 
         # Feature selection using BaseEvaluator method
-        X_train_sel, selected_features = self.feature_selection(
+        X_train_sel, selected_features, _ = self.feature_selection(
             X_train, y_train, feature_selection_method, num_features
         )
         if feature_selection_method == 'kbest':

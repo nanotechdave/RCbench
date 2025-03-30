@@ -1,7 +1,15 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from typing import List, Optional, Union, Tuple
 
-def plot_nlt_prediction(input_signal, target, prediction, time=None, train_ratio=0.8, title='NLT Task', figsize=(10, 4)):
+def plot_nlt_prediction(input_signal: np.ndarray, 
+                        target: np.ndarray, 
+                        prediction: np.ndarray, 
+                        time: Optional[Union[np.ndarray, List]] = None, 
+                        train_ratio: float = 0.8, 
+                        title: str = 'NLT Task', 
+                        figsize: Tuple[int, int] = (10, 4),
+                        ) -> None:
     """
     Plots input signal, target waveform, and prediction for an NLT task.
 

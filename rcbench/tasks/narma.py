@@ -5,6 +5,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.decomposition import PCA
 from typing import Dict, Union, Optional, Any, List, Tuple
 from rcbench.tasks.baseevaluator import BaseEvaluator
+from rcbench.tasks.featureselector import FeatureSelector
 from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
@@ -187,9 +188,7 @@ class NarmaEvaluator(BaseEvaluator):
         if feature_selection_method == 'kbest':
             X_test_sel = X_test[:, selected_features]
         else:
-            pca = PCA(n_components=num_features)
-            pca.fit(X_train)
-            X_test_sel = pca.transform(X_test)
+            X_test_sel = self.apply_feature_selection(X_test)
 
         # Train regression model (Ridge)
         model = self.train_regression(X_train_sel, y_train, regression_alpha)

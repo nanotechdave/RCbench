@@ -14,17 +14,18 @@ Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
 
-# RCDA - Reservoir Computing Data Analysis Toolkit
+# RCbench - Reservoir Computing Benchmark Toolkit
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-GPLv3-blue)
 ![Cython](https://img.shields.io/badge/built%20with-Cython-orange)
 
-**RCDA (Reservoir Computing Data Analysis)** is a flexible, efficient, and easy-to-use Python package designed to help you perform and analyze reservoir computing tasks. It features built-in support for key benchmarks such as Nonlinear Transformation (NLT), Memory Capacity (MC), and custom reservoir computing tasks.
+
+**RCbench (Reservoir Computing Benchmark Toolkit)** is a flexible, efficient, and easy-to-use Python package designed to help you perform and analyze reservoir computing tasks. It features built-in support for key benchmarks such as Nonlinear Transformation (NLT), Memory Capacity (MC), and custom reservoir computing tasks.
 
 ## 🚀 Overview
 
-RCDA provides:
+RCbench provides:
 
 - **Automatic measurement parsing** to easily handle experimental reservoir data.
 - **Built-in evaluators** for common reservoir computing benchmarks:
@@ -39,8 +40,8 @@ RCDA provides:
 ## 📂 Project Structure
 
 ```plaintext
-RCDA/
-├── rcda/
+RCbench/
+├── rcbench/
 │   ├── __init__.py
 │   ├── measurements/      # Data loading and parsing utilities
 │   ├── tasks/             # Reservoir computing tasks (NLT, Memory Capacity)
@@ -64,15 +65,15 @@ RCDA/
 **Install directly from GitHub:**
 
 ```bash
-pip install git+https://github.com/nanotechdave/RCDA.git
+pip install git+https://github.com/nanotechdave/RCbench.git
 ```
 
 
 Or, install locally (development mode):
 
 ```bash
-git clone https://github.com/nanotechdave/RCDA.git
-cd RCDA
+git clone https://github.com/nanotechdave/RCbench.git
+cd RCbench
 pip install -e .
 ```
 Note: The package contains compiled Cython modules, which will be built automatically during installation.
@@ -81,9 +82,9 @@ Note: The package contains compiled Cython modules, which will be built automati
 Here's a quick example demonstrating how to perform an NLT evaluation:
 
 ```python
-from rcda.measurements.loader import MeasurementLoader
-from rcda.measurements.parser import MeasurementParser
-from rcda.tasks.nlt import NltEvaluator
+from rcbench.measurements.loader import MeasurementLoader
+from rcbench.measurements.parser import MeasurementParser
+from rcbench.tasks.nlt import NltEvaluator
 
 # Load and parse measurement data
 measurement_file = 'your_measurement_file.txt'  # Update with your file path
@@ -115,7 +116,7 @@ print(f"NLT square wave accuracy: {result['accuracy']:.4f}")
 ```
 
 ## 📈 Visualization Tools
-RCDA includes built-in visualization functions to help you inspect your results:
+RCbench includes built-in visualization functions to help you inspect your results:
 
 - Cycle-based alignment plots for NLT tasks.
 
@@ -124,20 +125,21 @@ RCDA includes built-in visualization functions to help you inspect your results:
 - Custom waveform visualization for validating data and model predictions.
 
 ## ⚡️ High Performance (Cython Integration)
-RCDA leverages Cython to accelerate performance-critical operations:
+RCbench leverages Cython to accelerate performance-critical operations:
 ```python
-from rcda.tasks.fast_module import sum_of_squares
+from rcbench.tasks.c_metrics import evaluate_mc
 
-print(sum_of_squares(1000000))  # This function runs significantly faster than its pure Python counterpart.
+print(evaluate_mc())  # This function runs significantly faster than its pure Python counterpart.
 ```
 
 ## 📝 Contributions & Issues
 Contributions are welcome! Please open a pull request or an issue on GitHub.
 
-- Issue Tracker: https://github.com/nanotechdave/RCDA/issues
+- Issue Tracker: https://github.com/nanotechdave/RCbench/issues
 
-- Pull Requests: https://github.com/nanotechdave/RCDA/pulls
+- Pull Requests: https://github.com/nanotechdave/RCbench/pulls
 
 ## 📜 License
-RCDA is licensed under the MIT License. See the LICENSE file for details.
+RCbench is licensed under the MIT License. See the LICENSE file for details.
+
 

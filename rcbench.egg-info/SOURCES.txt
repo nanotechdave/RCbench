@@ -12,7 +12,6 @@ rcbench/classes/Measurement.py
 rcbench/classes/__init__.py
 rcbench/classes/sample.py
 rcbench/measurements/__init__.py
-rcbench/measurements/cleaner.py
 rcbench/measurements/dataset.py
 rcbench/measurements/loader.py
 rcbench/measurements/parser.py
@@ -28,4 +27,5 @@ rcbench/tasks/sinx.py
 rcbench/utils/__init__.py
 rcbench/utils/utils.py
 rcbench/visualization/__init__.py
+rcbench/visualization/mc_plotter.py
 rcbench/visualization/nlt_plotter.py

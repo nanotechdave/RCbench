@@ -7,6 +7,7 @@ from scipy.signal import sawtooth
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 from rcbench.tasks.baseevaluator import BaseEvaluator
+from rcbench.tasks.featureselector import FeatureSelector
 from rcbench.visualization.nlt_plotter import plot_nlt_prediction
 from rcbench.logger import get_logger
 from typing import Dict, List, Union, Any, Tuple
@@ -150,9 +151,7 @@ class NltEvaluator(BaseEvaluator):
         if feature_selection_method == 'kbest':
             X_test_sel = X_test[:, selected_features]
         else:
-            pca = PCA(n_components=num_features)
-            pca.fit(X_train)
-            X_test_sel = pca.transform(X_test)
+            X_test_sel = self.apply_feature_selection(X_test)
         
         model = self.train_regression(X_train_sel, y_train, regression_alpha)
         y_pred = model.predict(X_test_sel)

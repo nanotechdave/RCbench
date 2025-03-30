@@ -1,5 +1,6 @@
 import numpy as np
 from rcbench.tasks.baseevaluator import BaseEvaluator
+from rcbench.tasks.featureselector import FeatureSelector
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
 from sklearn.feature_selection import SelectKBest, f_regression
@@ -68,10 +69,7 @@ class SinxEvaluator(BaseEvaluator):
         if feature_selection_method == 'kbest':
             X_test_sel = X_test[:, selected_features]
         else:
-            # PCA is fitted inside feature_selection already
-            pca = PCA(n_components=num_features)
-            pca.fit(X_train)
-            X_test_sel = pca.transform(X_test)
+            X_test_sel = self.apply_feature_selection(X_test)
 
         # Regression
         model = self.train_regression(X_train_sel, y_train, alpha=regression_alpha)

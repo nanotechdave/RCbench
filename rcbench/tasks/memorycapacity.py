@@ -4,16 +4,18 @@ import numpy as np
 from sklearn.linear_model import Ridge
 from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.decomposition import PCA
+from typing import Dict, List, Tuple, Union, Any
 from rcbench.tasks.baseevaluator import BaseEvaluator
 from rcbench.logger import get_logger
 from rcbench.tasks.c_metrics import evaluate_mc
+
 
     
 
 
 logger = get_logger(__name__)
 class MemoryCapacityEvaluator(BaseEvaluator):
-    def __init__(self, input_signal, nodes_output, max_delay=30):
+    def __init__(self, input_signal: np.ndarray, nodes_output: np.ndarray, max_delay: int = 30) -> None:
         """
         Initializes the Memory Capacity evaluator.
 
@@ -22,12 +24,12 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         - nodes_output (np.ndarray): Reservoir node output (features).
         - max_delay (int): Maximum delay steps to evaluate.
         """
-        self.input_signal = input_signal
-        self.nodes_output = nodes_output
-        self.max_delay = max_delay
+        self.input_signal: np.ndarray = input_signal
+        self.nodes_output: np.ndarray = nodes_output
+        self.max_delay: int = max_delay
         self.targets = self.target_generator()
 
-    def target_generator(self):
+    def target_generator(self) -> Dict[int, np.ndarray]:
         """
         Generates delayed versions of the input signal.
 
@@ -49,11 +51,12 @@ class MemoryCapacityEvaluator(BaseEvaluator):
             return covariance**2 / (variance_pred * variance_true) """
     
     def run_evaluation(self,
-                       delay,
-                       feature_selection_method='kbest',
-                       num_features=10,
-                       regression_alpha=1.0,
-                       train_ratio=0.8):
+                       delay: int,
+                       feature_selection_method: str = 'kbest',
+                       num_features: int = 10,
+                       regression_alpha: float = 1.0,
+                       train_ratio: float = 0.8,
+                       ) -> Dict[str, Any]:
         if delay not in self.targets:
             raise ValueError(f"Delay '{delay}' not available.")
 
@@ -101,10 +104,11 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         }
 
     def calculate_total_memory_capacity(self,
-                                        feature_selection_method='kbest',
-                                        num_features=10,
-                                        regression_alpha=1.0,
-                                        train_ratio=0.8):
+                                        feature_selection_method: str = 'kbest',
+                                        num_features: int = 10,
+                                        regression_alpha: float = 1.0,
+                                        train_ratio: float = 0.8,
+                                        ) -> Dict[str, Union[float, Dict[int, float]]]:
         total_mc = 0
         delay_results = {}
         for delay in range(1, self.max_delay + 1):

@@ -1,6 +1,7 @@
 import numpy as np
 from rcbench.tasks.baseevaluator import BaseEvaluator
 from rcbench.logger import get_logger
+from typing import Dict, Tuple, Any
 
 logger = get_logger(__name__)
 
@@ -34,7 +35,7 @@ class GeneralizationRankEvaluator(BaseEvaluator):
           A fraction (e.g. 1e-3) of the maximum singular value. Singular values below this threshold
           are considered negligible. Default is 1e-3.
     """
-    def __init__(self, states, threshold=1e-3):
+    def __init__(self, states: np.ndarray, threshold: float = 1e-3) -> None:
         self.threshold = threshold
 
         # Ensure states is a 2D array.
@@ -44,7 +45,7 @@ class GeneralizationRankEvaluator(BaseEvaluator):
         m, n = states.shape
         self.M = states
 
-    def compute_generalization_rank(self):
+    def compute_generalization_rank(self) -> Tuple[int, np.ndarray]:
         """
         Computes the effective (generalization) rank of matrix M via SVD.
         
@@ -60,7 +61,7 @@ class GeneralizationRankEvaluator(BaseEvaluator):
         effective_rank = np.sum(s > (self.threshold * s_max))
         return effective_rank, s
 
-    def run_evaluation(self):
+    def run_evaluation(self) -> Dict[str, Any]:
         """
         Runs the generalization rank evaluation.
         

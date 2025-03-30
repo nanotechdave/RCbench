@@ -5,10 +5,14 @@ from sklearn.metrics import mean_squared_error
 from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.decomposition import PCA
 from rcbench.logger import get_logger
+from typing import Dict, List, Union, Optional, Any
 
 logger = get_logger(__name__)
 class SinxEvaluator(BaseEvaluator):
-    def __init__(self, input_signal, nodes_output):
+    def __init__(self, 
+                 input_signal: Union[np.ndarray, List[float]], 
+                 nodes_output: np.ndarray,
+                 ) -> None:
         """
         Initializes the SinxEvaluator for approximating sin(normalized_input).
 
@@ -20,13 +24,17 @@ class SinxEvaluator(BaseEvaluator):
         self.normalized_input = self._normalize_input(self.input_signal)
         self.target = np.sin(self.normalized_input)
 
-    def _normalize_input(self, x):
+    def _normalize_input(self, x: np.ndarray) -> np.ndarray:
         """Normalize input to range [0, 2π]."""
         x_min = np.min(x)
         x_max = np.max(x)
         return 2 * np.pi * (x - x_min) / (x_max - x_min)
 
-    def evaluate_metric(self, y_true, y_pred, metric='NMSE'):
+    def evaluate_metric(self, 
+                        y_true: np.ndarray, 
+                        y_pred: np.ndarray, 
+                        metric: str = 'NMSE',
+                        ) -> float:
         if metric == 'NMSE':
             return np.mean((y_true - y_pred) ** 2) / np.var(y_true)
         elif metric == 'RNMSE':
@@ -37,11 +45,12 @@ class SinxEvaluator(BaseEvaluator):
             raise ValueError("Unsupported metric: choose 'NMSE', 'RNMSE', or 'MSE'")
 
     def run_evaluation(self,
-                       metric='NMSE',
-                       feature_selection_method='kbest',
-                       num_features=10,
-                       regression_alpha=1.0,
-                       train_ratio=0.8):
+                       metric: str = 'NMSE',
+                       feature_selection_method: str = 'kbest',
+                       num_features: Union[str, int] = 10,
+                       regression_alpha: float = 1.0,
+                       train_ratio: float = 0.8,
+                       ) -> Dict[str, Any]:
         """
         Run the sin(x) reconstruction task using reservoir outputs.
 

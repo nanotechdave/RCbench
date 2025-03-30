@@ -5,11 +5,16 @@ from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
 class ReservoirDataset:
-    def __init__(self, dataframe: pd.DataFrame, time_column: str, voltage_columns: List[str] , current_columns: List[str]):
-        self.dataframe = dataframe
-        self.time_column = time_column
-        self.voltage_columns = voltage_columns
-        self.current_columns = current_columns
+    def __init__(self, 
+                 dataframe: pd.DataFrame, 
+                 time_column: str, 
+                 voltage_columns: List[str] , 
+                 current_columns: List[str]
+                 ) -> None:
+        self.dataframe: pd.DataFrame = dataframe
+        self.time_column: str = time_column
+        self.voltage_columns: List[str] = voltage_columns
+        self.current_columns: List[str] = current_columns
 
     @property
     def time(self) -> np.ndarray:

@@ -5,7 +5,7 @@ from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
 class ReservoirDataset:
-    def __init__(self, dataframe: pd.DataFrame, time_column: str, voltage_columns: List , current_columns: List):
+    def __init__(self, dataframe: pd.DataFrame, time_column: str, voltage_columns: List[str] , current_columns: List[str]):
         self.dataframe = dataframe
         self.time_column = time_column
         self.voltage_columns = voltage_columns

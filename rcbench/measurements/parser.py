@@ -70,7 +70,8 @@ class MeasurementParser:
                 if electrode not in exclude:
                     node_electrodes.append(electrode)
 
-        return list(set(node_electrodes))
+        # Sort numerically by converting to int, then back to string
+        return sorted(list(set(node_electrodes)), key=lambda x: int(x))
 
     def get_input_voltages(self) -> Dict[str, np.ndarray]:
         return {elec: self.dataframe[f'{elec}_V[V]'].values for elec in self.input_electrodes}

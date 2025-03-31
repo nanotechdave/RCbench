@@ -4,6 +4,7 @@ from pathlib import Path
 from rcbench.measurements.dataset import ReservoirDataset
 from rcbench.tasks.narma import NarmaEvaluator
 from rcbench.logger import get_logger
+from rcbench.visualization.plot_config import NarmaPlotConfig
 
 logger = get_logger(__name__)
 logger.setLevel(logging.INFO) #use 25 for output only, use logging.INFO for output and INFO 
@@ -31,6 +32,16 @@ input_signal = input_voltages[primary_input_electrode]
 # Create list of electrode names for the node electrodes
 electrode_names = electrodes_info['node_electrodes']
 
+# Create plot configuration with all plots enabled
+plot_config = NarmaPlotConfig(
+    plot_input_signal=False,
+    plot_output_responses=False,
+    plot_nonlinearity=False,
+    plot_frequency_analysis=True,
+    plot_target_prediction=True,
+    show_plot=True
+)
+
 evaluatorNARMA = NarmaEvaluator(input_signal, 
                                nodes_output, 
                                electrode_names=electrode_names,  # Pass electrode names
@@ -39,17 +50,21 @@ evaluatorNARMA = NarmaEvaluator(input_signal,
                                beta=0.4, 
                                gamma=0.6, 
                                delta=0.1,
+                               plot_config=plot_config
                                )
 resultsNARMA2 = evaluatorNARMA.run_evaluation(metric='NMSE',
                                             feature_selection_method='pca',
                                             num_features='all',
                                             regression_alpha=0.01,
                                             train_ratio=0.8,
-                                            plot=True
+                                            plot=False  # Don't plot in run_evaluation
                                         )
 logger.output(f"NARMA Analysis for order: {evaluatorNARMA.order}")
 logger.output(f"  - Metric: {resultsNARMA2['metric']}")
 logger.output(f"  - Accuracy: {resultsNARMA2['accuracy']:.5f}\n")
+
+# Generate all plots
+evaluatorNARMA.plot_results(existing_results=resultsNARMA2)
 
 
     

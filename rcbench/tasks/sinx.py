@@ -7,6 +7,8 @@ from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.decomposition import PCA
 from rcbench.logger import get_logger
 from typing import Dict, List, Union, Optional, Any
+from rcbench.visualization.sinx_plotter import SinxPlotter
+from rcbench.visualization.plot_config import SinxPlotConfig
 
 logger = get_logger(__name__)
 class SinxEvaluator(BaseEvaluator):
@@ -14,6 +16,7 @@ class SinxEvaluator(BaseEvaluator):
                  input_signal: Union[np.ndarray, List[float]], 
                  nodes_output: np.ndarray,
                  electrode_names: Optional[List[str]] = None,
+                 plot_config: Optional[SinxPlotConfig] = None
                  ) -> None:
         """
         Initializes the SinxEvaluator for approximating sin(normalized_input).
@@ -22,10 +25,14 @@ class SinxEvaluator(BaseEvaluator):
         - input_signal (np.ndarray): Random white noise input signal.
         - nodes_output (np.ndarray): Reservoir node voltages (features).
         - electrode_names (Optional[List[str]]): Names of electrodes for nodes.
+        - plot_config (Optional[SinxPlotConfig]): Configuration for plotting.
         """
         super().__init__(input_signal, nodes_output, electrode_names)
         self.normalized_input = self._normalize_input(self.input_signal)
         self.target = np.sin(self.normalized_input)
+        
+        # Initialize plotter with provided config
+        self.plotter = SinxPlotter(config=plot_config)
 
     def _normalize_input(self, x: np.ndarray) -> np.ndarray:
         """Normalize input to range [0, 2π]."""
@@ -85,5 +92,68 @@ class SinxEvaluator(BaseEvaluator):
             'selected_features': selected_features,
             'model': model,
             'y_pred': y_pred,
-            'y_test': y_test
+            'y_test': y_test,
+            'train_ratio': train_ratio
         }
+        
+    def plot_results(self, existing_results: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Generate plots for the sin(x) evaluation results.
+        
+        Args:
+            existing_results (Optional[Dict[str, Any]]): Results from a previous run_evaluation call.
+                                                        If None, run_evaluation will be called.
+        """
+        # Run evaluation if results not provided
+        if existing_results is None:
+            results = self.run_evaluation()
+        else:
+            results = existing_results
+            
+        # Create a time array for plotting
+        time = np.arange(len(self.input_signal))
+        
+        # Create node outputs dictionary for visualization
+        node_outputs = {}
+        for i, name in enumerate(self.electrode_names):
+            node_outputs[name] = self.nodes_output[:, i]
+            
+        # Get test data from results
+        y_test = results['y_test']
+        y_pred = results['y_pred']
+        
+        # Calculate starting index for test data based on train_ratio
+        train_ratio = results.get('train_ratio', 0.8)
+        test_start_idx = int(train_ratio * len(self.input_signal))
+        
+        # Create time array for test data
+        test_time = time[test_start_idx:test_start_idx + len(y_test)]
+        
+        # First create general plots with the full dataset (not target-specific)
+        self.plotter.plot_results(
+            time=time,
+            input_signal=self.input_signal,
+            node_outputs=node_outputs,
+            save_dir=None
+        )
+        
+        # Then create prediction plots with the test data subset
+        if y_test is not None and y_pred is not None:
+            # Calculate the test portion of the input signal
+            test_input_signal = self.input_signal[test_start_idx:test_start_idx + len(y_test)]
+            
+            # Create a dictionary for test node outputs
+            test_node_outputs = {}
+            for name, output in node_outputs.items():
+                test_node_outputs[name] = output[test_start_idx:test_start_idx + len(y_test)]
+            
+            # Now generate the target-specific plots with properly aligned time arrays
+            self.plotter.plot_results(
+                time=test_time,
+                input_signal=test_input_signal,
+                node_outputs=test_node_outputs,
+                y_true=y_test,
+                y_pred=y_pred,
+                target_name="sin(x)",
+                save_dir=None
+            )

@@ -7,6 +7,8 @@ from typing import Dict, Union, Optional, Any, List, Tuple
 from rcbench.tasks.baseevaluator import BaseEvaluator
 from rcbench.tasks.featureselector import FeatureSelector
 from rcbench.logger import get_logger
+from rcbench.visualization.narma_plotter import NarmaPlotter
+from rcbench.visualization.plot_config import NarmaPlotConfig
 
 logger = get_logger(__name__)
 
@@ -88,7 +90,8 @@ class NarmaEvaluator(BaseEvaluator):
         alpha: float = 0.4,
         beta: float = 0.4,
         gamma: float = 0.6,
-        delta: float = 0.1
+        delta: float = 0.1,
+        plot_config: Optional[NarmaPlotConfig] = None
     ) -> None:
         """
         Initializes the NARMA evaluator.
@@ -99,6 +102,7 @@ class NarmaEvaluator(BaseEvaluator):
             electrode_names (List[str], optional): Names of the electrodes.
             order (int): The order of the NARMA system (default is 10).
             alpha, beta, gamma, delta (float): coefficients for the NARMA equation.
+            plot_config (Optional[NarmaPlotConfig]): Configuration for plotting.
         """
         # Call the parent class constructor
         super().__init__(input_signal, nodes_output, electrode_names)
@@ -110,6 +114,12 @@ class NarmaEvaluator(BaseEvaluator):
                                                'delta': delta,
                                                }
         self.targets: Dict[str, np.ndarray] = self.target_generator()
+        
+        # Initialize plotter with provided config
+        self.plotter = NarmaPlotter(config=plot_config)
+        
+        # Create a time array (for plotting)
+        self.time = np.arange(len(input_signal))
 
     def target_generator(self) -> Dict[str, np.ndarray]:
         """
@@ -203,5 +213,65 @@ class NarmaEvaluator(BaseEvaluator):
             'selected_features': selected_features,
             'model': model,
             'y_pred': y_pred,
-            'y_test': y_test
+            'y_test': y_test,
+            'train_ratio': train_ratio
         }
+        
+    def plot_results(self, existing_results: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Generate plots for the NARMA task evaluation results.
+        
+        Args:
+            existing_results (Optional[Dict[str, Any]]): Results from a previous run_evaluation call.
+                                                        If None, run_evaluation will be called.
+        """
+        # Run evaluation if results not provided
+        if existing_results is None:
+            results = self.run_evaluation()
+        else:
+            results = existing_results
+            
+        # Create node outputs dictionary for visualization
+        node_outputs = {}
+        for i, name in enumerate(self.electrode_names):
+            node_outputs[name] = self.nodes_output[:, i]
+            
+        # Get test data from results
+        y_test = results['y_test']
+        y_pred = results['y_pred']
+        
+        # Calculate starting index for test data based on train_ratio
+        train_ratio = results.get('train_ratio', 0.8)
+        test_start_idx = int(train_ratio * len(self.input_signal))
+        
+        # Create time array for test data
+        test_time = self.time[test_start_idx:test_start_idx + len(y_test)]
+        
+        # First create general plots with the full dataset (not target-specific)
+        self.plotter.plot_results(
+            time=self.time,
+            input_signal=self.input_signal,
+            node_outputs=node_outputs,
+            save_dir=None
+        )
+        
+        # Then create prediction plots with the test data subset
+        if y_test is not None and y_pred is not None:
+            # Calculate the test portion of the input signal
+            test_input_signal = self.input_signal[test_start_idx:test_start_idx + len(y_test)]
+            
+            # Create a dictionary for test node outputs
+            test_node_outputs = {}
+            for name, output in node_outputs.items():
+                test_node_outputs[name] = output[test_start_idx:test_start_idx + len(y_test)]
+            
+            # Now generate the target-specific plots with properly aligned time arrays
+            self.plotter.plot_results(
+                time=test_time,
+                input_signal=test_input_signal,
+                node_outputs=test_node_outputs,
+                y_true=y_test,
+                y_pred=y_pred,
+                target_name=f"NARMA-{self.order}",
+                save_dir=None
+            )

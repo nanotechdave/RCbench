@@ -8,21 +8,11 @@ from rcbench.tasks.featureselector import FeatureSelector
 from rcbench.logger import get_logger
 from rcbench.tasks.c_metrics import evaluate_mc
 from rcbench.visualization.mc_plotter import MCPlotter
+from rcbench.visualization.plot_config import MCPlotConfig
 from dataclasses import dataclass
 from typing import Optional
 
 logger = get_logger(__name__)
-
-@dataclass
-class PlotConfig:
-    """Configuration for plotting options."""
-    save_dir: Optional[str] = None
-    plot_mc_vs_delay: bool = True
-    plot_feature_importance: bool = True
-    plot_prediction_results: bool = True
-    plot_cumulative_mc: bool = True
-    plot_mc_heatmap: bool = True
-    figsize: tuple = (10, 6)
 
 class MemoryCapacityEvaluator(BaseEvaluator):
     def __init__(self, 
@@ -30,7 +20,8 @@ class MemoryCapacityEvaluator(BaseEvaluator):
                  nodes_output: np.ndarray, 
                  max_delay: int = 30,
                  random_state: int = 42,
-                 electrode_names: Optional[List[str]] = None) -> None:
+                 electrode_names: Optional[List[str]] = None,
+                 plot_config: Optional[MCPlotConfig] = None) -> None:
         """
         Initializes the Memory Capacity evaluator.
 
@@ -40,12 +31,16 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         - max_delay (int): Maximum delay steps to evaluate.
         - random_state (int): Random seed for reproducibility.
         - electrode_names (Optional[List[str]]): Names of electrodes for plotting.
+        - plot_config (Optional[MCPlotConfig]): Configuration for plotting.
         """
         super().__init__(input_signal, nodes_output, electrode_names)
         self.max_delay: int = max_delay
         self.random_state = random_state
         self.targets = self.target_generator()
-        self.plotter = MCPlotter()
+        
+        # Create plotter with config
+        self.plotter = MCPlotter(config=plot_config)
+        
         self.evaluation_results = None
         self.mc_matrix = None
         
@@ -180,27 +175,86 @@ class MemoryCapacityEvaluator(BaseEvaluator):
 
         return self.evaluation_results
 
-    def plot_results(self, plot_config: PlotConfig) -> None:
+    def plot_results(self) -> None:
         """
-        Generate plots for the evaluation results.
-        
-        Args:
-            plot_config (PlotConfig): Configuration for plotting options
+        Generate plots for the evaluation results based on plotter's configuration.
         """
         if self.evaluation_results is None:
             logger.warning("No evaluation results available. Run calculate_total_memory_capacity first.")
             return
 
         delay_results = self.evaluation_results['delay_results']
-        all_results = self.evaluation_results['all_results']  # Get stored results
+        all_results = self.evaluation_results['all_results']
         
-        if plot_config.plot_mc_vs_delay:
+        # First generate the general reservoir property plots
+        # Create node outputs dictionary for visualization
+        node_outputs = {}
+        for i, name in enumerate(self.electrode_names):
+            node_outputs[name] = self.nodes_output[:, i]
+        
+        # Plot general reservoir properties if enabled
+        if self.plotter.config.plot_input_signal:
+            self.plotter.plot_input_signal(
+                time=np.arange(len(self.input_signal)),
+                input_signal=self.input_signal,
+                title="MC Task Input Signal",
+                save_path=self.plotter.config.get_save_path("input_signal.png")
+            )
+            
+        if self.plotter.config.plot_output_responses:
+            self.plotter.plot_output_responses(
+                time=np.arange(len(self.input_signal)),
+                outputs=node_outputs,
+                title="Reservoir Node Responses",
+                save_path=self.plotter.config.get_save_path("output_responses.png")
+            )
+            
+        if self.plotter.config.plot_nonlinearity:
+            self.plotter.plot_nonlinearity(
+                inputs=self.input_signal,
+                outputs=node_outputs,
+                title="Node Nonlinearity",
+                save_path=self.plotter.config.get_save_path("nonlinearity.png"),
+                style=self.plotter.config.nonlinearity_plot_style
+            )
+            
+        if self.plotter.config.plot_frequency_analysis:
+            # Compute frequency analysis for input and nodes
+            time = np.arange(len(self.input_signal))
+            
+            # Create signals dictionary for frequency analysis
+            signals = {"input": self.input_signal}
+            # Add a subset of node outputs
+            node_names = list(node_outputs.keys())[:5]  # Limit to 5 nodes for clarity
+            for node_name in node_names:
+                signals[f"node_{node_name}"] = node_outputs[node_name]
+            
+            # Compute and plot frequency analysis if BasePlotter methods are available
+            if hasattr(self.plotter, 'compute_frequency_analysis') and hasattr(self.plotter, 'plot_node_spectra'):
+                # Compute frequencies and power spectra
+                frequencies, power_spectra = self.plotter.compute_frequency_analysis(time, signals)
+                
+                # Create node spectra dictionary (excluding input)
+                node_spectra = {key: value for key, value in power_spectra.items() if key != "input"}
+                
+                # Plot frequency analysis
+                self.plotter.plot_node_spectra(
+                    frequencies=frequencies,
+                    input_spectrum=power_spectra["input"], 
+                    node_spectra=node_spectra,
+                    title="Node Frequency Response",
+                    save_path=self.plotter.config.get_save_path("frequency_analysis.png"),
+                    frequency_range=self.plotter.config.frequency_range
+                )
+        
+        # Now generate the MC-specific plots
+        if self.plotter.config.plot_mc_curve:
             self.plotter.plot_mc_vs_delay(
                 delay_results,
-                save_path=f"{plot_config.save_dir}/mc_vs_delay.png" if plot_config.save_dir else None
+                save_path=self.plotter.config.get_save_path("mc_vs_delay.png")
             )
         
-        if plot_config.plot_feature_importance and self.selected_features is not None:
+        if hasattr(self.plotter.config, 'plot_feature_importance') and self.plotter.config.plot_feature_importance and self.selected_features is not None:
             # Use the actual electrode names
             feature_names = self.selected_feature_names
             
@@ -219,30 +273,33 @@ class MemoryCapacityEvaluator(BaseEvaluator):
                 importance_scores,
                 feature_names=feature_names,
                 title=f'Feature Importance ({self.feature_selection_method})',
-                save_path=f"{plot_config.save_dir}/feature_importance.png" if plot_config.save_dir else None
+                save_path=self.plotter.config.get_save_path("feature_importance.png")
             )
         
-        if plot_config.plot_cumulative_mc:
+        if self.plotter.config.plot_total_mc:
             self.plotter.plot_cumulative_mc(
                 delay_results,
-                save_path=f"{plot_config.save_dir}/cumulative_mc.png" if plot_config.save_dir else None
+                save_path=self.plotter.config.get_save_path("cumulative_mc.png")
             )
         
-        if plot_config.plot_mc_heatmap and self.mc_matrix is not None:
+        # We'll keep this for backwards compatibility, but check if the attribute exists first
+        if hasattr(self.plotter.config, 'plot_mc_heatmap') and self.plotter.config.plot_mc_heatmap and self.mc_matrix is not None:
             self.plotter.plot_mc_heatmap(
                 self.mc_matrix,
                 range(1, self.max_delay + 1),
                 range(self.nodes_output.shape[1]),
-                save_path=f"{plot_config.save_dir}/mc_heatmap.png" if plot_config.save_dir else None
+                save_path=self.plotter.config.get_save_path("mc_heatmap.png")
             )
         
-        if plot_config.plot_prediction_results:
+        if self.plotter.config.plot_predictions:
             # Use stored results instead of recomputing
-            for delay in range(1, self.max_delay + 1):
+            max_delays_to_plot = min(self.plotter.config.max_delays_to_plot, self.max_delay)
+            
+            for delay in range(1, max_delays_to_plot + 1):
                 result = all_results[delay]  # Use stored result instead of recomputing
                 self.plotter.plot_prediction_results(
                     y_true=result['y_test'],
                     y_pred=result['y_pred'],
                     title=f'Prediction Results for Delay {delay}',
-                    save_path=f"{plot_config.save_dir}/prediction_delay_{delay}.png" if plot_config.save_dir else None
+                    save_path=self.plotter.config.get_save_path(f"prediction_delay_{delay}.png")
                 )

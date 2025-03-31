@@ -4,6 +4,7 @@ from pathlib import Path
 from rcbench.measurements.dataset import ReservoirDataset
 from rcbench.tasks.sinx import SinxEvaluator
 from rcbench.logger import get_logger
+from rcbench.visualization.plot_config import SinxPlotConfig
 
 logger = get_logger(__name__)
 logger.setLevel(logging.INFO) #use 25 for output only, use logging.INFO for output and INFO 
@@ -31,11 +32,23 @@ input_signal = input_voltages[primary_input_electrode]
 # Get electrode names for the node electrodes
 electrode_names = electrodes_info['node_electrodes']
 
+# Create plot configuration with all plots enabled
+plot_config = SinxPlotConfig(
+    plot_input_signal=True,
+    plot_output_responses=True,
+    plot_nonlinearity=True,
+    plot_frequency_analysis=True,
+    plot_target_prediction=True,
+    show_plot=True
+)
+
 evaluatorSinX = SinxEvaluator(
     input_signal=input_signal, 
     nodes_output=nodes_output,
-    electrode_names=electrode_names
+    electrode_names=electrode_names,
+    plot_config=plot_config
 )
+
 resultSinX = evaluatorSinX.run_evaluation(
     metric='NMSE',
     feature_selection_method='kbest',
@@ -44,6 +57,9 @@ resultSinX = evaluatorSinX.run_evaluation(
 )
 
 logger.output(f"SinX Accuracy ({resultSinX['metric']}): {resultSinX['accuracy']:.4f}\n")
+
+# Generate all plots
+evaluatorSinX.plot_results(existing_results=resultSinX)
 
 
 

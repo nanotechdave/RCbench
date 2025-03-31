@@ -8,9 +8,10 @@ from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 from rcbench.tasks.baseevaluator import BaseEvaluator
 from rcbench.tasks.featureselector import FeatureSelector
-from rcbench.visualization.nlt_plotter import plot_nlt_prediction
+from rcbench.visualization.nlt_plotter import NLTPlotter
+from rcbench.visualization.plot_config import NLTPlotConfig
 from rcbench.logger import get_logger
-from typing import Dict, List, Union, Any, Tuple
+from typing import Dict, List, Union, Any, Tuple, Optional
 
 logger = get_logger(__name__)
 class NltEvaluator(BaseEvaluator):
@@ -20,6 +21,7 @@ class NltEvaluator(BaseEvaluator):
                  time_array: Union[np.ndarray, List[float]], 
                  waveform_type: str = 'sine',
                  electrode_names: List[str] = None,
+                 plot_config: Optional[NLTPlotConfig] = None,
                  ) -> None:
         """
         Initializes the NLT evaluator.
@@ -30,6 +32,7 @@ class NltEvaluator(BaseEvaluator):
             time_array: The time values corresponding to signals.
             waveform_type: Type of waveform, 'sine' (default) or 'triangular'.
             electrode_names: Optional list of electrode names.
+            plot_config: Optional configuration for plotting.
         """
         # Initialize electrode names if not provided
         if electrode_names is None:
@@ -41,8 +44,10 @@ class NltEvaluator(BaseEvaluator):
         self.time = time_array
         self.waveform_type = waveform_type
         self.targets: Dict[str, np.ndarray] = self.target_generator()
-
         
+        # Create plotter with config
+        self.plotter = NLTPlotter(config=plot_config)
+
     def _estimate_phase_from_maxima(self, 
                                     signal: np.ndarray, 
                                     time: np.ndarray,
@@ -170,13 +175,34 @@ class NltEvaluator(BaseEvaluator):
         accuracy = self.evaluate_metric(y_test, y_pred, metric)
 
         if plot:
-            plot_nlt_prediction(
-                input_signal=self.input_signal,
-                target=target_waveform,
-                prediction=y_pred,
+            # Create a dictionary of node outputs
+            node_outputs = {}
+            for i, name in enumerate(self.electrode_names):
+                node_outputs[name] = self.nodes_output[:, i]
+            
+            # Generate frequency analysis data if needed
+            frequencies = None
+            power_spectra = None
+            
+            # Plot using our NLTPlotter
+            self.plotter.plot_input_signal(
                 time=self.time,
-                train_ratio=train_ratio,
-                title=f"NLT Task: {target_name}"
+                input_signal=self.input_signal,
+                title=f"Input Signal for {target_name}",
+                save_path=self.plotter.config.get_save_path(f"{target_name}_input.png")
+            )
+            
+            # Plot prediction results
+            # Adjust for train/test split
+            test_indices = np.arange(len(y))[int(train_ratio * len(y)):]
+            test_time = self.time[test_indices]
+            
+            self.plotter.plot_target_prediction(
+                y_true=y_test,
+                y_pred=y_pred,
+                time=test_time,
+                title=f"NLT Task: {target_name}",
+                save_path=self.plotter.config.get_save_path(f"{target_name}_prediction.png")
             )
         
         return {
@@ -187,3 +213,95 @@ class NltEvaluator(BaseEvaluator):
             'y_pred': y_pred,
             'y_test': y_test,
         }
+        
+    def plot_results(self, existing_results: Optional[Dict[str, Dict[str, Any]]] = None) -> None:
+        """
+        Generate plots for all targets based on plotter's configuration.
+        
+        Args:
+            existing_results: Optional dictionary of pre-computed results for each target
+        """
+        if not self.targets:
+            logger.warning("No targets available for plotting.")
+            return
+            
+        # Use existing results if provided, otherwise compute them
+        results = {}
+        if existing_results:
+            results = existing_results
+        else:
+            # We need to run evaluation for each target first to get predictions
+            for target_name in self.targets:
+                try:
+                    result = self.run_evaluation(
+                        target_name=target_name,
+                        feature_selection_method='pca',
+                        num_features='all',
+                        plot=False  # Don't plot individually
+                    )
+                    results[target_name] = result
+                except Exception as e:
+                    logger.error(f"Error evaluating {target_name}: {str(e)}")
+        
+        # Create node outputs dictionary for visualization
+        node_outputs = {}
+        for i, name in enumerate(self.electrode_names):
+            node_outputs[name] = self.nodes_output[:, i]
+        
+        # First create general plots with the full dataset (not target-specific)
+        self.plotter.plot_results(
+            time=self.time,
+            input_signal=self.input_signal,
+            node_outputs=node_outputs,
+            save_dir=self.plotter.config.save_dir
+        )
+        
+        # Generate plots for each target with the appropriate test data
+        for target_name, result in results.items():
+            if 'y_pred' in result and 'y_test' in result:
+                # For each target, get correct time array for test data
+                
+                # Estimate train_ratio from data lengths if needed
+                if 'y_train' in result and len(result.get('y_train', [])) > 0:
+                    train_ratio = len(result['y_train']) / (len(result['y_train']) + len(result['y_test']))
+                else:
+                    train_ratio = 0.8
+                
+                # Calculate test indices
+                total_samples = len(self.time)
+                test_start = int(train_ratio * total_samples)
+                test_indices = np.arange(test_start, total_samples)
+                
+                # Ensure indices match test data length
+                if len(test_indices) > len(result['y_test']):
+                    test_indices = test_indices[:len(result['y_test'])]
+                
+                # Get time values for test data
+                test_time = self.time[test_indices] if len(test_indices) <= len(self.time) else self.time[-len(result['y_test']):]
+                
+                # Ensure time array matches prediction length
+                if len(test_time) > len(result['y_test']):
+                    test_time = test_time[:len(result['y_test'])]
+                elif len(test_time) < len(result['y_test']):
+                    test_time = np.arange(len(result['y_test']))
+                
+                # Set save directory for this target's plots
+                save_dir = self.plotter.config.save_dir
+                
+                # Use test data slices rather than the full arrays
+                # We need to slice the input signal and node_outputs to match test_time
+                test_input_signal = self.input_signal[test_indices]
+                test_node_outputs = {}
+                for node_name, output in node_outputs.items():
+                    test_node_outputs[node_name] = output[test_indices]
+                
+                # Use the unified plotting method for each target
+                self.plotter.plot_results(
+                    time=test_time,
+                    input_signal=test_input_signal,
+                    node_outputs=test_node_outputs,
+                    y_true=result['y_test'],
+                    y_pred=result['y_pred'],
+                    target_name=target_name,
+                    save_dir=save_dir
+                )

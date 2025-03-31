@@ -2,7 +2,8 @@ import logging
 from pathlib import Path
 
 from rcbench.measurements.dataset import ReservoirDataset
-from rcbench.tasks.memorycapacity import MemoryCapacityEvaluator, PlotConfig
+from rcbench.tasks.memorycapacity import MemoryCapacityEvaluator
+from rcbench.visualization.plot_config import MCPlotConfig
 from rcbench.logger import get_logger
 
 
@@ -32,22 +33,36 @@ input_signal = input_voltages[primary_input_electrode]
 electrode_names = electrodes_info['node_electrodes']
 logger.info(f"Node electrodes: {electrode_names}")
 
-# Create plot configuration
-plot_config = PlotConfig(
+# Create MC plot configuration
+plot_config = MCPlotConfig(
     save_dir=None,  # Save plots to this directory
-    plot_mc_vs_delay=False,
-    plot_feature_importance=True,
-    plot_prediction_results=False,
-    plot_cumulative_mc=True,
-    plot_mc_heatmap=False
+    
+    # MC-specific plot options
+    plot_mc_curve=True,          # Plot the memory capacity vs delay curve
+    plot_predictions=True,        # Plot predictions for each delay
+    plot_total_mc=True,           # Plot cumulative memory capacity
+    max_delays_to_plot=5,         # Maximum number of delays to plot predictions for
+    
+    # General reservoir property plots
+    plot_input_signal=True,       # Plot the input signal
+    plot_output_responses=True,   # Plot node responses
+    plot_nonlinearity=True,       # Plot nonlinearity of nodes
+    plot_frequency_analysis=True, # Plot frequency analysis
+    
+    # Plot styling options
+    nonlinearity_plot_style='scatter',
+    frequency_range=(0, 50)       # Limit frequency range to 0-50 Hz
 )
 
+# Create evaluator with plot configuration
 evaluatorMC = MemoryCapacityEvaluator(
     input_signal, 
     nodes_output, 
     max_delay=30,
-    electrode_names=electrode_names
+    electrode_names=electrode_names,
+    plot_config=plot_config
 )
+
 
 resultsMC = evaluatorMC.calculate_total_memory_capacity(
     feature_selection_method='pca',
@@ -55,7 +70,9 @@ resultsMC = evaluatorMC.calculate_total_memory_capacity(
     regression_alpha=0.1,
     train_ratio=0.8,
 )
-evaluatorMC.plot_results(plot_config)
+
+# Generate plots based on the plotter's configuration
+evaluatorMC.plot_results()
 
 logger.output(f"Total Memory Capacity: {resultsMC['total_memory_capacity']:.4f}\n")
 

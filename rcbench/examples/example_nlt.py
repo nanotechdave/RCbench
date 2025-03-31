@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from rcbench.measurements.dataset import ReservoirDataset
 from rcbench.tasks.nlt import NltEvaluator
+from rcbench.visualization.plot_config import NLTPlotConfig
 from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
@@ -32,16 +33,36 @@ time = dataset.time
 nodes_output = dataset.get_node_voltages()
 electrode_names = electrodes_info['node_electrodes']
 
-# Run NLT evaluation
+# Create NLT plot configuration
+plot_config = NLTPlotConfig(
+    save_dir=None,  # Save plots to this directory
+    
+    # General reservoir property plots
+    plot_input_signal=True,         # Plot the input signal
+    plot_output_responses=True,     # Plot node responses
+    plot_nonlinearity=True,         # Plot nonlinearity of nodes
+    plot_frequency_analysis=True,   # Plot frequency analysis
+    
+    # Target-specific plots
+    plot_target_prediction=True,    # Plot target vs prediction results
+    
+    # Plot styling options
+    nonlinearity_plot_style='scatter',
+    frequency_range=(0, 20)         # Limit frequency range to 0-20 Hz for clearer visualization
+)
+
+# Run NLT evaluation with plot config
 evaluatorNLT = NltEvaluator(
     input_signal=input_signal,
     nodes_output=nodes_output,
     time_array=time,
     waveform_type='sine',  # or 'triangular'
-    electrode_names=electrode_names
+    electrode_names=electrode_names,
+    plot_config=plot_config
 )
 
-# Run evaluation for each generated target waveform
+# Run evaluation without plots first to compute all results
+logger.info("Running evaluations for all targets...")
 resultsNLT = {}
 for target_name in evaluatorNLT.targets:
     try:
@@ -52,7 +73,7 @@ for target_name in evaluatorNLT.targets:
             num_features='all',
             regression_alpha=0.01,
             train_ratio=0.8,
-            plot=True,  # Enable plotting
+            plot=False,  # Don't plot during evaluation
         )
         resultsNLT[target_name] = result
         # Print results clearly
@@ -63,6 +84,12 @@ for target_name in evaluatorNLT.targets:
         logger.output(f"  - Model Weights: {result['model'].coef_}\n")
     except Exception as e:
         logger.error(f"Error evaluating {target_name}: {str(e)}")
+
+# Generate all plots in one go, including frequency analysis
+# Pass the pre-computed results to avoid re-computing everything
+logger.info("Generating comprehensive plots including frequency analysis...")
+evaluatorNLT.plot_results(existing_results=resultsNLT)
+
 
     
 

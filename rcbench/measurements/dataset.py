@@ -4,6 +4,7 @@ import re
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Union
+from rcbench.measurements.parser import MeasurementParser
 from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
@@ -25,8 +26,9 @@ class ReservoirDataset:
                 source: Union[str, pd.DataFrame, Path],
                 time_column: str = 'Time[s]',
                 ground_threshold: float = 1e-2,
-                input_electrode: Optional[str] = None,
-                ground_electrode: Optional[str] = None):
+                input_electrodes: Optional[List[str]] = None,
+                ground_electrodes: Optional[List[str]] = None,
+                node_electrodes: Optional[List[str]] = None):
         """
         Initialize a ReservoirDataset from a file or existing DataFrame.
         
@@ -34,14 +36,16 @@ class ReservoirDataset:
             source (Union[str, pd.DataFrame, Path]): Path to measurement file or DataFrame
             time_column (str): Name of the time column
             ground_threshold (float): Threshold for identifying ground electrodes
-            input_electrode (Optional[str]): Force a specific electrode as input
-            ground_electrode (Optional[str]): Force a specific electrode as ground
+            input_electrode (Optional[List[str]]): Force specific electrodes as input
+            ground_electrode (Optional[List[str]]): Force specific electrodes as ground
+            node_electrodes (Optional[List[str]]): Force specific electrodes as nodes
         """
         self.time_column = time_column
         self.ground_threshold = ground_threshold
         self.measurement_type = MeasurementType.UNKNOWN
-        self.forced_input = input_electrode
-        self.forced_ground = ground_electrode
+        self.forced_inputs = input_electrodes
+        self.forced_grounds = ground_electrodes
+        self.forced_nodes = node_electrodes
         
         # Load data from file path or use provided DataFrame
         if isinstance(source, (str, Path)):
@@ -52,19 +56,22 @@ class ReservoirDataset:
             self.file_path = None
             self.dataframe = source
         
-        # Extract electrode columns for informational purposes
+        # Extract electrode columns for reference
         self.voltage_columns = [col for col in self.dataframe.columns if col.endswith('_V[V]')]
         self.current_columns = [col for col in self.dataframe.columns if col.endswith('_I[A]')]
         
-        # Create the parser
-        # Import here to avoid circular imports
-        from rcbench.measurements.parser import MeasurementParser
-        self.parser = MeasurementParser(self, ground_threshold)
+        # Identify electrodes using the parser
+        identified_electrodes = MeasurementParser.identify_electrodes(
+            self.dataframe, 
+            ground_threshold=self.ground_threshold,
+            forced_inputs=self.forced_inputs,
+            forced_grounds=self.forced_grounds
+        )
         
-        # Store electrode information from the parser
-        self.input_electrodes = self.parser.input_electrodes
-        self.ground_electrodes = self.parser.ground_electrodes
-        self.node_electrodes = self.parser.node_electrodes
+        # Store electrode information in this object
+        self.input_electrodes = self.forced_inputs if self.forced_inputs is not None else identified_electrodes['input_electrodes']
+        self.ground_electrodes = self.forced_grounds if self.forced_grounds is not None else identified_electrodes['ground_electrodes']
+        self.node_electrodes = self.forced_nodes if self.forced_nodes is not None else identified_electrodes['node_electrodes']
         
         logger.info(f"Measurement type: {self.measurement_type.value if self.measurement_type else 'Unknown'}")
     
@@ -143,7 +150,7 @@ class ReservoirDataset:
         Returns:
             Dict[str, np.ndarray]: Dictionary mapping electrode names to voltage arrays
         """
-        return self.parser.get_input_voltages()
+        return MeasurementParser.get_input_voltages(self.dataframe, self.input_electrodes)
 
     def get_input_currents(self) -> Dict[str, np.ndarray]:
         """
@@ -152,7 +159,7 @@ class ReservoirDataset:
         Returns:
             Dict[str, np.ndarray]: Dictionary mapping electrode names to current arrays
         """
-        return self.parser.get_input_currents()
+        return MeasurementParser.get_input_currents(self.dataframe, self.input_electrodes)
 
     def get_ground_voltages(self) -> Dict[str, np.ndarray]:
         """
@@ -161,7 +168,7 @@ class ReservoirDataset:
         Returns:
             Dict[str, np.ndarray]: Dictionary mapping electrode names to voltage arrays
         """
-        return self.parser.get_ground_voltages()
+        return MeasurementParser.get_ground_voltages(self.dataframe, self.ground_electrodes)
 
     def get_ground_currents(self) -> Dict[str, np.ndarray]:
         """
@@ -170,7 +177,7 @@ class ReservoirDataset:
         Returns:
             Dict[str, np.ndarray]: Dictionary mapping electrode names to current arrays
         """
-        return self.parser.get_ground_currents()
+        return MeasurementParser.get_ground_currents(self.dataframe, self.ground_electrodes)
 
     def get_node_voltages(self) -> np.ndarray:
         """
@@ -179,7 +186,7 @@ class ReservoirDataset:
         Returns:
             np.ndarray: Matrix of node voltages [samples, electrodes]
         """
-        return self.parser.get_node_voltages()
+        return MeasurementParser.get_node_voltages(self.dataframe, self.node_electrodes)
     
     def get_node_voltage(self, node: str) -> np.ndarray:
         """
@@ -191,7 +198,7 @@ class ReservoirDataset:
         Returns:
             np.ndarray: Voltage data for the specified node
         """
-        return self.parser.get_node_voltage(node)
+        return MeasurementParser.get_node_voltage(self.dataframe, node, self.node_electrodes)
     
     def summary(self) -> Dict:
         """
@@ -200,13 +207,11 @@ class ReservoirDataset:
         Returns:
             Dict: Summary information
         """
-        electrode_info = self.parser.summary()
-        
         return {
             'measurement_type': self.measurement_type.value,
-            'input_electrodes': electrode_info['input_electrodes'],
-            'ground_electrodes': electrode_info['ground_electrodes'],
-            'node_electrodes': electrode_info['node_electrodes'],
+            'input_electrodes': self.input_electrodes,
+            'ground_electrodes': self.ground_electrodes,
+            'node_electrodes': self.node_electrodes,
             'time_column': self.time_column,
             'voltage_columns': self.voltage_columns,
             'current_columns': self.current_columns,

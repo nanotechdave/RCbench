@@ -37,14 +37,28 @@ def measurement_data():
 @pytest.fixture
 def parsed_data(measurement_data):
     """Legacy fixture for backward compatibility - will be deprecated."""
-    parser = MeasurementParser(measurement_data)
-    return parser
+    # Create a dictionary to hold the parser data using the updated static methods
+    parser_data = {
+        'dataframe': measurement_data.dataframe,
+        'electrodes': MeasurementParser.identify_electrodes(measurement_data.dataframe)
+    }
+    
+    # Add methods to get data from the dataset
+    parser_data['get_input_voltages'] = lambda: MeasurementParser.get_input_voltages(
+        measurement_data.dataframe, parser_data['electrodes']['input_electrodes'])
+    
+    parser_data['get_node_voltages'] = lambda: MeasurementParser.get_node_voltages(
+        measurement_data.dataframe, parser_data['electrodes']['node_electrodes'])
+    
+    parser_data['summary'] = lambda: parser_data['electrodes']
+    
+    return parser_data
 
 
 def test_electrode_names_consistency(parsed_data):
     """Test that electrode names are consistent between parser and feature selection."""
     # Get data from parser
-    electrodes_info = parsed_data.summary()
+    electrodes_info = parsed_data['summary']()
     node_electrodes = electrodes_info['node_electrodes']
     
     # Check that node_electrodes is not empty
@@ -54,8 +68,8 @@ def test_electrode_names_consistency(parsed_data):
     print(f"Node electrodes from parser: {node_electrodes}")
     
     # Get input and node outputs
-    input_voltages = parsed_data.get_input_voltages()
-    nodes_output = parsed_data.get_node_voltages()
+    input_voltages = parsed_data['get_input_voltages']()
+    nodes_output = parsed_data['get_node_voltages']()
     
     # Get input signal
     primary_input_electrode = electrodes_info['input_electrodes'][0]
@@ -95,12 +109,12 @@ def test_electrode_names_consistency(parsed_data):
 def test_memorycapacity_evaluator_electrode_selection(parsed_data):
     """Test that MemoryCapacityEvaluator selects the correct electrodes."""
     # Get data from parser
-    electrodes_info = parsed_data.summary()
+    electrodes_info = parsed_data['summary']()
     node_electrodes = electrodes_info['node_electrodes']
     
     # Get input and node outputs
-    input_voltages = parsed_data.get_input_voltages()
-    nodes_output = parsed_data.get_node_voltages()
+    input_voltages = parsed_data['get_input_voltages']()
+    nodes_output = parsed_data['get_node_voltages']()
     
     # Get input signal
     primary_input_electrode = electrodes_info['input_electrodes'][0]
@@ -140,12 +154,12 @@ def test_memorycapacity_evaluator_electrode_selection(parsed_data):
 def test_importance_values_match_electrodes(parsed_data):
     """Test that feature importance values match the correct electrodes."""
     # Get data from parser
-    electrodes_info = parsed_data.summary()
+    electrodes_info = parsed_data['summary']()
     node_electrodes = electrodes_info['node_electrodes']
     
     # Get input and node outputs
-    input_voltages = parsed_data.get_input_voltages()
-    nodes_output = parsed_data.get_node_voltages()
+    input_voltages = parsed_data['get_input_voltages']()
+    nodes_output = parsed_data['get_node_voltages']()
     
     # Get input signal
     primary_input_electrode = electrodes_info['input_electrodes'][0]
@@ -215,12 +229,12 @@ def test_importance_values_match_electrodes(parsed_data):
 def test_selected_columns_match_electrode_data(parsed_data):
     """Test that selected columns match the actual electrode data."""
     # Get data from parser
-    electrodes_info = parsed_data.summary()
+    electrodes_info = parsed_data['summary']()
     node_electrodes = electrodes_info['node_electrodes']
     
     # Get input and node outputs
-    input_voltages = parsed_data.get_input_voltages()
-    nodes_output = parsed_data.get_node_voltages()
+    input_voltages = parsed_data['get_input_voltages']()
+    nodes_output = parsed_data['get_node_voltages']()
     
     # Get input signal
     primary_input_electrode = electrodes_info['input_electrodes'][0]
@@ -295,10 +309,9 @@ def test_raw_measurement_data_matches_selected_electrodes():
     # Load and parse the data using the standard pipeline
     loader = MeasurementLoader(measurement_file)
     dataset = loader.get_dataset()
-    parser = MeasurementParser(dataset)
     
-    # Get electrode information from parser
-    electrodes_info = parser.summary()
+    # Get electrode information using the parser
+    electrodes_info = MeasurementParser.identify_electrodes(dataset.dataframe)
     node_electrodes = electrodes_info['node_electrodes']
     
     print(f"Node electrodes: {node_electrodes}")
@@ -312,23 +325,23 @@ def test_raw_measurement_data_matches_selected_electrodes():
             
     print(f"Target electrode: {target_electrode}")
     
-    # Get input and node outputs from parser
-    input_voltages = parser.get_input_voltages()
-    nodes_output = parser.get_node_voltages()
+    # Get input and node outputs using static methods
+    input_voltages = MeasurementParser.get_input_voltages(dataset.dataframe, electrodes_info['input_electrodes'])
+    nodes_output = MeasurementParser.get_node_voltages(dataset.dataframe, node_electrodes)
     
     # Get individual node voltage arrays directly from the dataframe
     node_voltages = {}
     for node in node_electrodes:
         col = f'{node}_V[V]'
-        if col in parser.dataframe.columns:
-            node_voltages[node] = parser.dataframe[col].values
+        if col in dataset.dataframe.columns:
+            node_voltages[node] = dataset.dataframe[col].values
         else:
             print(f"Could not get voltage for node {node}: Column {col} not found")
     
     # Get index of target electrode in node_electrodes list
     target_idx = node_electrodes.index(target_electrode)
     
-    # Get values directly from the parser for our target electrode
+    # Get values directly from the dataframe for our target electrode
     target_voltage = node_voltages.get(target_electrode, None)
     if target_voltage is None:
         pytest.skip(f"Could not get voltage data for electrode {target_electrode}")
@@ -339,17 +352,17 @@ def test_raw_measurement_data_matches_selected_electrodes():
     # Get raw values from the direct node reading
     raw_values = target_voltage[:10]
     
-    print(f"Raw values from parser dataframe (first 10): {raw_values}")
+    print(f"Raw values from dataframe (first 10): {raw_values}")
     print(f"Node values from nodes_output matrix (first 10): {nodes_values}")
     print(f"Original target values from raw file (first 10): {target[:10]}")
     
-    # Verify that raw data from the file matches node output for electrode '10'
+    # Verify that raw data from the file matches node output for the target electrode
     assert np.allclose(target[:10], nodes_values, rtol=1e-5, atol=1e-5), \
         f"Data mismatch between raw file data and nodes_output for electrode {target_electrode}"
     
-    # Verify that raw values from parser dataframe match nodes_output
+    # Verify that raw values from dataframe match nodes_output
     assert np.allclose(raw_values, nodes_values, rtol=1e-5, atol=1e-5), \
-        f"Data mismatch between parser dataframe and nodes_output for electrode {target_electrode}"
+        f"Data mismatch between dataframe and nodes_output for electrode {target_electrode}"
     
     # Now run feature selection
     y = np.sin(input_voltages[electrodes_info['input_electrodes'][0]])  # Use sine of input as target
@@ -383,7 +396,7 @@ def test_raw_measurement_data_matches_selected_electrodes():
         
         # Verify that raw values match selected feature values
         assert np.allclose(raw_values, selected_values, rtol=1e-5, atol=1e-5), \
-            f"Data mismatch between parser dataframe and selected feature values for electrode {target_electrode}"
+            f"Data mismatch between dataframe and selected feature values for electrode {target_electrode}"
         
         # Double check that nodes_output matches selected values
         assert np.allclose(nodes_values, selected_values, rtol=1e-5, atol=1e-5), \
@@ -464,17 +477,16 @@ def test_electrode_data_consistency_with_raw_dataframe():
     raw_values = raw_df[target_column].values[:20]  # Get first 20 values
     print(f"Raw values from DataFrame['{target_column}'] (first 20):\n{raw_values}")
     
-    # Now parse the data normally
-    parser = MeasurementParser(dataset)
-    electrodes_info = parser.summary()
+    # Get electrode information using the static method
+    electrodes_info = MeasurementParser.identify_electrodes(dataset.dataframe)
     node_electrodes = electrodes_info['node_electrodes']
     
     # Verify target electrode is in node_electrodes
     if target_electrode not in node_electrodes:
         pytest.skip(f"Target electrode {target_electrode} not found in node_electrodes")
     
-    # Get the node output matrix
-    nodes_output = parser.get_node_voltages()
+    # Get the node output matrix using the static method
+    nodes_output = MeasurementParser.get_node_voltages(dataset.dataframe, node_electrodes)
     
     # Get the index of target electrode in node_electrodes
     target_idx = node_electrodes.index(target_electrode)
@@ -488,7 +500,7 @@ def test_electrode_data_consistency_with_raw_dataframe():
         f"Data mismatch between raw dataframe and parser's node output for electrode {target_electrode}"
     
     # Now run feature selection
-    input_voltages = parser.get_input_voltages()
+    input_voltages = MeasurementParser.get_input_voltages(dataset.dataframe, electrodes_info['input_electrodes'])
     primary_input_electrode = electrodes_info['input_electrodes'][0]
     input_signal = input_voltages[primary_input_electrode]
     

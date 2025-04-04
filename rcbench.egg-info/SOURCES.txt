@@ -18,6 +18,7 @@ rcbench/measurements/parser.py
 rcbench/tasks/__init__.py
 rcbench/tasks/baseevaluator.py
 rcbench/tasks/c_metrics.c
+rcbench/tasks/featureselector.py
 rcbench/tasks/generalizationrank.py
 rcbench/tasks/kernelrank.py
 rcbench/tasks/memorycapacity.py
@@ -27,5 +28,9 @@ rcbench/tasks/sinx.py
 rcbench/utils/__init__.py
 rcbench/utils/utils.py
 rcbench/visualization/__init__.py
+rcbench/visualization/base_plotter.py
 rcbench/visualization/mc_plotter.py
+rcbench/visualization/narma_plotter.py
 rcbench/visualization/nlt_plotter.py
+rcbench/visualization/plot_config.py
+rcbench/visualization/sinx_plotter.py

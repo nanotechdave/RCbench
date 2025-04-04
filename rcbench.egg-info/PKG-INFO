@@ -21,19 +21,28 @@ License-File: LICENSE
 ![Cython](https://img.shields.io/badge/built%20with-Cython-orange)
 
 
-**RCbench (Reservoir Computing Benchmark Toolkit)** is a flexible, efficient, and easy-to-use Python package designed to help you perform and analyze reservoir computing tasks. It features built-in support for key benchmarks such as Nonlinear Transformation (NLT), Memory Capacity (MC), and custom reservoir computing tasks.
+**RCbench (Reservoir Computing Benchmark Toolkit)** is a comprehensive Python package for evaluating and benchmarking reservoir computing systems. It provides standardized tasks, flexible visualization tools, and efficient evaluation methods for both physical and simulated reservoirs.
 
-## 🚀 Overview
+## 🚀 Features
 
 RCbench provides:
 
-- **Automatic measurement parsing** to easily handle experimental reservoir data.
-- **Built-in evaluators** for common reservoir computing benchmarks:
-  - **NLT (Nonlinear Transformation)** tasks
-  - **Memory Capacity** evaluations
-  - **Custom function approximation**
-- **Visualization tools** to quickly assess and present results.
-- **Efficient Cython-based modules** for computationally intensive operations, ensuring high performance.
+-**Multiple Benchmark Tasks:**
+  -**NLT (Nonlinear Transformation):** Evaluate reservoir performance on standard nonlinear transformations
+  -**NARMA:** Test with Nonlinear Auto-Regressive Moving Average models of different orders
+  -**Memory Capacity:** Measure the short and long-term memory capabilities
+  -**Sin(x):** Assess reservoir ability to approximate sine functions
+-**Advanced Visualization:**
+  -Task-specific plotters with customizable configurations
+  -General reservoir properties visualization (input signals, output responses, nonlinearity)
+  -Frequency domain analysis of reservoir behavior
+  -Target vs. prediction comparison with proper time alignment
+-**Efficient Data Handling:**
+  -Automatic measurement loading and parsing
+  -Support for various experimental data formats
+  -Feature selection and dimensionality reduction tools
+-**Performance Optimization:**
+  -Cython-accelerated modules for computationally intensive operations
 
 ---
 
@@ -42,21 +51,29 @@ RCbench provides:
 ```plaintext
 RCbench/
 ├── rcbench/
-│   ├── __init__.py
-│   ├── measurements/      # Data loading and parsing utilities
-│   ├── tasks/             # Reservoir computing tasks (NLT, Memory Capacity)
-│   │   ├── nlt.py
-│   │   ├── memorycapacity.py
-│   │   ├── baseevaluator.py
-│   │   └── fast_module.pyx  # Cython module
-│   ├── visualization/     # Plotting and visualization utilities
-│   │   ├── __init__.py
-│   │   └── nlt_plotter.py
-│   └── logger.py          # Custom logger configuration
-├── tests/                 # Unit tests
-├── setup.py               # Installation script
-├── pyproject.toml         # Build configuration
-└── README.md              # Project description and usage instructions
+│   ├── measurements/          # Data handling
+│   │   ├── dataset.py         # ReservoirDataset class
+│   │   ├── loader.py          # Data loading utilities
+│   │   └── parser.py          # Data parsing utilities
+│   ├── tasks/                 # Reservoir computing tasks
+│   │   ├── baseevaluator.py   # Base evaluation methods
+│   │   ├── nlt.py             # Nonlinear Transformation
+│   │   ├── narma.py           # NARMA tasks
+│   │   ├── memorycapacity.py  # Memory Capacity
+│   │   ├── sinx.py            # Sin(x) approximation
+│   │   └── featureselector.py # Feature selection tools
+│   ├── visualization/         # Plotting utilities
+│   │   ├── base_plotter.py    # Base plotting functionality
+│   │   ├── plot_config.py     # Plot configurations
+│   │   ├── nlt_plotter.py     # NLT visualization
+│   │   ├── narma_plotter.py   # NARMA visualization
+│   │   └── sinx_plotter.py    # Sin(x) visualization
+│   └── logger.py              # Logging utilities
+└── examples/                  # Example scripts
+    ├── example_nlt.py
+    ├── example_NARMA.py
+    ├── example_sinx.py
+    └── example_MC.py
 ```
 ---
 
@@ -82,47 +99,58 @@ Note: The package contains compiled Cython modules, which will be built automati
 Here's a quick example demonstrating how to perform an NLT evaluation:
 
 ```python
-from rcbench.measurements.loader import MeasurementLoader
-from rcbench.measurements.parser import MeasurementParser
-from rcbench.tasks.nlt import NltEvaluator
+from rcbench.measurements.dataset import ReservoirDataset
+from rcbench.tasks.narma import NarmaEvaluator
+from rcbench.visualization.plot_config import NarmaPlotConfig
 
-# Load and parse measurement data
-measurement_file = 'your_measurement_file.txt'  # Update with your file path
-dataset = MeasurementLoader(measurement_file).get_dataset()
-parser = MeasurementParser(dataset)
+# Load dataset
+dataset = ReservoirDataset("your_measurement_file.txt")
+electrodes_info = dataset.summary()
 
-# Extract signals
-input_electrode = parser.input_electrodes[0]
-input_signal = parser.get_input_voltages()[input_electrode]
-nodes_output = parser.get_node_voltages()
-time = dataset.time
+# Get input and node data
+input_signal = dataset.get_input_voltages()[electrodes_info['input_electrodes'][0]]
+nodes_output = dataset.get_node_voltages()
+electrode_names = electrodes_info['node_electrodes']
 
-# Initialize evaluator
-evaluator = NltEvaluator(
+# Configure plotting
+plot_config = NarmaPlotConfig(
+    plot_input_signal=True,
+    plot_output_responses=True,
+    plot_nonlinearity=True,
+    plot_frequency_analysis=True,
+    plot_target_prediction=True
+)
+
+# Initialize evaluator and run
+evaluator = NarmaEvaluator(
     input_signal=input_signal,
     nodes_output=nodes_output,
-    time_array=time,
-    waveform_type='sine'  # or 'triangular'
+    electrode_names=electrode_names,
+    order=2,  # NARMA-2
+    plot_config=plot_config
 )
 
-# Run evaluation for a chosen target, e.g., 'square_wave'
-result = evaluator.run_evaluation(
-    target_name='square_wave',
+results = evaluator.run_evaluation(
     metric='NMSE',
-    plot=True
+    feature_selection_method='pca',
+    num_features='all'
 )
 
-print(f"NLT square wave accuracy: {result['accuracy']:.4f}")
+print(f"NARMA-2 Accuracy: {results['accuracy']:.5f}")
+
+# Generate all plots (both general reservoir properties and task-specific)
+evaluator.plot_results(existing_results=results)
 ```
 
 ## 📈 Visualization Tools
-RCbench includes built-in visualization functions to help you inspect your results:
-
-- Cycle-based alignment plots for NLT tasks.
-
-- Memory Capacity curves for analyzing reservoir memory.
-
-- Custom waveform visualization for validating data and model predictions.
+RCbench features a unified visualization system with:
+-**Task-Specific Plotters:** Dedicated plotters for each task (NLTPlotter, NarmaPlotter, SinxPlotter)
+-**Customizable Configurations:** Control which plots to generate through configuration objects
+-**Comprehensive Visualization:** For each task, view:
+  -General reservoir properties (input signals, node responses, nonlinearity)
+  -Frequency domain analysis
+  -Target vs. prediction comparisons
+All plotters are built on a common base architecture, ensuring consistent styling and behavior.
 
 ## ⚡️ High Performance (Cython Integration)
 RCbench leverages Cython to accelerate performance-critical operations:
@@ -140,6 +168,6 @@ Contributions are welcome! Please open a pull request or an issue on GitHub.
 - Pull Requests: https://github.com/nanotechdave/RCbench/pulls
 
 ## 📜 License
-RCbench is licensed under the MIT License. See the LICENSE file for details.
+RCbench is licensed under the GPLv3 License. See the LICENSE file for details.
 
 

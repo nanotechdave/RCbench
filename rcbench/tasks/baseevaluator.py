@@ -1,4 +1,4 @@
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, LinearRegression
 from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -88,10 +88,18 @@ class BaseEvaluator:
 
     def train_regression(self, 
                          X_train: np.ndarray, 
-                         y_train: np.ndarray, 
+                         y_train: np.ndarray,
+                         modeltype: str = "Ridge", 
                          alpha: float = 1.0,
-                         ) -> Ridge:
-        model = Ridge(alpha=alpha)
+                         ) -> Union[Ridge, LinearRegression]:
+        if modeltype.lower() == "ridge":
+            model = Ridge(alpha=alpha)
+
+        elif modeltype.lower() == "linear":
+            model = LinearRegression()
+        
+        else:
+            raise ValueError("Model unrecognized, please select Ridge or Linear")
         model.fit(X_train, y_train)
         return model
 

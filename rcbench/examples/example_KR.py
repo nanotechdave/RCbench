@@ -3,6 +3,7 @@ from pathlib import Path
 
 from rcbench.measurements.dataset import ReservoirDataset
 from rcbench.tasks.kernelrank import KernelRankEvaluator
+from rcbench.tasks.generalizationrank import GeneralizationRankEvaluator
 from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
@@ -33,8 +34,15 @@ evaluatorKernel = KernelRankEvaluator(nodes_output, threshold=1e-6)
 
 resultsKernel = evaluatorKernel.run_evaluation()
 
+general = GeneralizationRankEvaluator(nodes_output)
+resultgen = general.run_evaluation()
+
+
 logger.output(f"Kernel Analysis:")
 logger.output(f"  - Rank: {resultsKernel['kernel_rank']}\n")
+
+logger.output(f"Gen Analysis:")
+logger.output(f"  - Rank: {resultgen['generalization_rank']}\n")
 
 
 

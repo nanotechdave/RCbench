@@ -17,7 +17,7 @@ measurement_file_MC = BASE_DIR.parent / "tests" / "test_files" / filenameMC
 
 # Load the data directly using the ReservoirDataset class
 dataset = ReservoirDataset(measurement_file_MC)
-
+print(dataset.dataframe.head())
 # Get information about the electrodes
 electrodes_info = dataset.summary()
 logger.info(f"Parsed Electrodes: {electrodes_info}")
@@ -67,6 +67,7 @@ evaluatorMC = MemoryCapacityEvaluator(
 resultsMC = evaluatorMC.calculate_total_memory_capacity(
     feature_selection_method='pca',
     num_features='all',
+    modeltype='Ridge',
     regression_alpha=0.1,
     train_ratio=0.8,
 )

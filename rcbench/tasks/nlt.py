@@ -145,6 +145,7 @@ class NltEvaluator(BaseEvaluator):
                        metric: str = 'NMSE',
                        feature_selection_method: str = 'kbest',
                        num_features: Union[str, int] = 'all',
+                       modeltype: str = "Ridge",
                        regression_alpha: float =1.0,
                        train_ratio: float = 0.8,
                        plot: bool = False
@@ -170,7 +171,7 @@ class NltEvaluator(BaseEvaluator):
         else:
             X_test_sel = self.apply_feature_selection(X_test)
         
-        model = self.train_regression(X_train_sel, y_train, regression_alpha)
+        model = self.train_regression(X_train_sel, y_train, modeltype, regression_alpha)
         y_pred = model.predict(X_test_sel)
         accuracy = self.evaluate_metric(y_test, y_pred, metric)
 

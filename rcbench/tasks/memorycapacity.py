@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, LinearRegression
 from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.decomposition import PCA
 from typing import Dict, List, Tuple, Union, Any, Optional
@@ -64,6 +64,7 @@ class MemoryCapacityEvaluator(BaseEvaluator):
     
     def run_evaluation(self,
                        delay: int,
+                       modeltype= "Ridge",
                        regression_alpha: float = 1.0,
                        train_ratio: float = 0.8
                        ) -> Dict[str, Any]:
@@ -94,7 +95,13 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         X_test_selected = self.apply_feature_selection(X_test)
 
         # Regression model
-        model = Ridge(alpha=regression_alpha, random_state=self.random_state)
+        if modeltype.lower() == "ridge":
+            model = Ridge(alpha=regression_alpha, random_state=self.random_state)
+        elif modeltype.lower() == "linear":
+            model = LinearRegression()
+        else:
+            raise ValueError("Model unrecognized, please select Ridge or Linear")
+        
         model.fit(X_train_selected, y_train)
         y_pred = model.predict(X_test_selected)
 
@@ -114,6 +121,7 @@ class MemoryCapacityEvaluator(BaseEvaluator):
     def calculate_total_memory_capacity(self,
                                       feature_selection_method: str = 'pca',
                                       num_features: int = 10,
+                                      modeltype: str = "Ridge",
                                       regression_alpha: float = 1.0,
                                       train_ratio: float = 0.8
                                       ) -> Dict[str, Union[float, Dict[int, float]]]:
@@ -157,6 +165,7 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         for delay in range(1, self.max_delay + 1):
             result = self.run_evaluation(
                 delay=delay,
+                modeltype=modeltype,
                 regression_alpha=regression_alpha,
                 train_ratio=train_ratio
             )

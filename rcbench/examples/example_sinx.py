@@ -53,6 +53,7 @@ resultSinX = evaluatorSinX.run_evaluation(
     metric='NMSE',
     feature_selection_method='kbest',
     num_features='all',
+    model="Linear",
     regression_alpha=0.1
 )
 

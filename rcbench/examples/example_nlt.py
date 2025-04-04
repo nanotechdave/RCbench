@@ -71,6 +71,7 @@ for target_name in evaluatorNLT.targets:
             metric='NMSE',
             feature_selection_method='pca',
             num_features='all',
+            model="Ridge",
             regression_alpha=0.01,
             train_ratio=0.8,
             plot=False,  # Don't plot during evaluation

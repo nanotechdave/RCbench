@@ -58,6 +58,7 @@ class SinxEvaluator(BaseEvaluator):
                        metric: str = 'NMSE',
                        feature_selection_method: str = 'kbest',
                        num_features: Union[str, int] = 10,
+                       modeltype="Ridge",
                        regression_alpha: float = 1.0,
                        train_ratio: float = 0.8,
                        ) -> Dict[str, Any]:
@@ -81,7 +82,7 @@ class SinxEvaluator(BaseEvaluator):
             X_test_sel = self.apply_feature_selection(X_test)
 
         # Regression
-        model = self.train_regression(X_train_sel, y_train, alpha=regression_alpha)
+        model = self.train_regression(X_train_sel, y_train, modeltype, alpha=regression_alpha)
         y_pred = model.predict(X_test_sel)
 
         accuracy = self.evaluate_metric(y_test, y_pred, metric)

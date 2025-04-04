@@ -54,10 +54,8 @@ class MeasurementLoader:
         if self.dataframe is None:
             self.load_data()
         return ReservoirDataset(
-            dataframe=self.dataframe,
-            time_column=self.time_column,
-            voltage_columns=self.voltage_columns,
-            current_columns=self.current_columns
+            source=self.dataframe,
+            time_column=self.time_column
         )
 
     def get_current_data(self) -> np.ndarray:

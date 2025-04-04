@@ -152,4 +152,6 @@ Contributions are welcome! Please open a pull request or an issue on GitHub.
 - Pull Requests: https://github.com/nanotechdave/RCbench/pulls
 
 ## 📜 License
+
 RCbench is licensed under the GPLv3 License. See the LICENSE file for details.
+

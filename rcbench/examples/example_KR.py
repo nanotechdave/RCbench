@@ -29,19 +29,12 @@ nodes_output = dataset.get_node_voltages()
 primary_input_electrode = electrodes_info['input_electrodes'][0]
 input_signal = input_voltages[primary_input_electrode]
 
-# Computing kernel rank via kernel rank evaluator
-evaluatorKernel = KernelRankEvaluator(nodes_output, threshold=1e-6)
-
-resultsKernel = evaluatorKernel.run_evaluation()
+# Computing kernel rank via kernel rank evaluator (using generalization rank for svd)
 
 general = GeneralizationRankEvaluator(nodes_output)
 resultgen = general.run_evaluation()
 
-
 logger.output(f"Kernel Analysis:")
-logger.output(f"  - Rank: {resultsKernel['kernel_rank']}\n")
-
-logger.output(f"Gen Analysis:")
 logger.output(f"  - Rank: {resultgen['generalization_rank']}\n")
 
 

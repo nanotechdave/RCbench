@@ -24,9 +24,6 @@ RCbench provides:
   -Automatic measurement loading and parsing
   -Support for various experimental data formats
   -Feature selection and dimensionality reduction tools
--**Performance Optimization:**
-  -Cython-accelerated modules for computationally intensive operations
-
 ---
 
 ## 📂 Project Structure

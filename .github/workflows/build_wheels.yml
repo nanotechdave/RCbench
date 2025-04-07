@@ -51,6 +51,10 @@ jobs:
           # Currently skipping tests until we have a proper test suite
           python -c "import rcbench; print(f'Successfully imported rcbench {rcbench.__version__}')"
           # pytest --cov=rcbench
+        env:
+          # Fix encoding issues on Windows
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
 
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -74,10 +78,21 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install build wheel
 
+      - name: Handle Windows encoding issues
+        if: runner.os == 'Windows'
+        run: |
+          # Check and convert README and other files to ensure UTF-8 encoding
+          # This helps prevent charmap codec issues on Windows
+          python -c "open('README.md', 'r', encoding='utf-8').read()"
+
       - name: Build wheels
         run: |
           python -m build --wheel
-        
+        env:
+          # Fix encoding issues on Windows
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
+
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}
@@ -102,6 +117,10 @@ jobs:
 
       - name: Build sdist
         run: python -m build --sdist
+        env:
+          # Fix encoding issues
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
 
       - uses: actions/upload-artifact@v4
         with:

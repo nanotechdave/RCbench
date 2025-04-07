@@ -36,6 +36,11 @@ setup(
             'pytest',
             'pytest-cov',
         ],
+        'dev': [
+            'bump2version',
+            'twine',
+            'build',
+        ],
     },
     python_requires=">=3.9",
     include_package_data=True,

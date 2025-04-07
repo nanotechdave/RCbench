@@ -3,7 +3,7 @@ name: CI
 # Continuous Integration workflow for rcbench
 on:
   push:
-    branches: [ main, githubactions ]
+    branches: []
     tags: [ 'v*' ]
   pull_request:
     branches: [ main ]

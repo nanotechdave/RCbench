@@ -1,0 +1,139 @@
+name: Release to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'  # Only run workflow when version tags are pushed
+  workflow_dispatch:  # Allow manual triggers for emergencies
+
+permissions:
+  contents: read
+  
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
+          
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build wheel
+          
+      - name: Handle Windows encoding issues
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Check and convert README and other files to ensure UTF-8 encoding
+          $content = Get-Content -Path 'README.md' -Raw -Encoding UTF8
+          Set-Content -Path 'README.md' -Value $content -Encoding UTF8
+          
+      - name: Build wheels
+        run: |
+          python -m build --wheel
+        env:
+          # Fix encoding issues on Windows
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
+          
+      - name: Store wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: dist/*.whl
+          
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
+          
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          
+      - name: Build sdist
+        run: python -m build --sdist
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
+          
+      - name: Store sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+          
+  publish:
+    name: Publish to PyPI
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/rcbench
+    steps:
+      - name: Download all distribution packages
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          merge-multiple: true
+          
+      - name: Display structure of downloaded files
+        run: ls -R dist/
+        
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verbose: true
+          
+  test-install:
+    name: Verify package installation
+    needs: publish
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.9', '3.12']
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+      - name: Wait for PyPI indexing
+        run: |
+          # Give PyPI some time to process and index the package
+          sleep 60
+          
+      - name: Install from PyPI
+        run: |
+          # Install the latest version of the package from PyPI
+          python -m pip install --upgrade rcbench
+          
+      - name: Test import
+        run: |
+          python -c "import rcbench; print(f'Successfully installed rcbench {rcbench.__version__}')" 

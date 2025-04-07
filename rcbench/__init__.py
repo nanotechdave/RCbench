@@ -1,3 +1,5 @@
+__version__ = "0.0.10"
+
 from .utils import utils
 from .tasks.nlt import NltEvaluator
 from .tasks.memorycapacity import MemoryCapacityEvaluator

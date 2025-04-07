@@ -1,10 +1,4 @@
-from setuptools import setup, Extension, find_packages
-from Cython.Build import cythonize
-import numpy
-
-extensions = [
-    Extension("rcbench.tasks.c_metrics", ["rcbench/tasks/c_metrics.pyx"], include_dirs=[numpy.get_include()])
-]
+from setuptools import setup, find_packages
 
 with open("README.md", "r") as f:
     long_description = f.read()
@@ -21,7 +15,6 @@ setup(
     author="Davide Pilati",
     author_email="davide.pilati@polito.it",
     license="MIT",
-    ext_modules=cythonize(extensions),
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.9",
@@ -35,8 +28,13 @@ setup(
         "scipy",
         "matplotlib",
         "scikit-learn",
-        "cython",
     ],
+    extras_require={
+        'test': [
+            'pytest',
+            'pytest-cov',
+        ],
+    },
     python_requires=">=3.9",
     include_package_data=True,
 )

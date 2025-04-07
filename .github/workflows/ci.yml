@@ -3,7 +3,7 @@ name: CI
 # Continuous Integration workflow for rcbench
 on:
   pull_request:
-    branches: [ main ]  # Run on PRs to main
+    branches: [ dev ]  # Run on PRs to main
   workflow_dispatch:  # Allow manual triggers
 
 # Set permissions to minimum required

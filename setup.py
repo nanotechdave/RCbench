@@ -28,6 +28,7 @@ setup(
         "scipy",
         "matplotlib",
         "scikit-learn",
+        "pandas",
     ],
     extras_require={
         'test': [

@@ -2,9 +2,6 @@ name: CI
 
 # Continuous Integration workflow for rcbench
 on:
-  push:
-    branches: []  # Don't run on branch pushes
-    tags: [ 'v*' ]  # Only run on version tags
   pull_request:
     branches: [ main ]  # Run on PRs to main
   workflow_dispatch:  # Allow manual triggers

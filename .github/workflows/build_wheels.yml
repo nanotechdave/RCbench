@@ -35,6 +35,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
+      - name: Fix Windows encoding (Windows only)
+        if: runner.os == 'Windows'
+        run: |
+          # Create a sitecustomize.py file to force UTF-8 encoding
+          echo "import sys; sys.stdout.reconfigure(encoding='utf-8'); sys.stderr.reconfigure(encoding='utf-8'); sys.stdin.reconfigure(encoding='utf-8')" > "$(python -c 'import site; print(site.getsitepackages()[0])')/sitecustomize.py"
+          # Set environment variables using GitHub Actions syntax
+          echo "PYTHONIOENCODING=utf-8" >> $env:GITHUB_ENV
+          echo "PYTHONUTF8=1" >> $env:GITHUB_ENV
+          echo "PYTHONLEGACYWINDOWSFSENCODING=0" >> $env:GITHUB_ENV
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -49,12 +59,19 @@ jobs:
       - name: Test with pytest
         run: |
           # Currently skipping tests until we have a proper test suite
-          python -c "import rcbench; print(f'Successfully imported rcbench {rcbench.__version__}')"
+          python -c "
+import sys
+# Force UTF-8 encoding if on Windows
+if sys.platform.startswith('win'):
+    import os
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    os.environ['PYTHONUTF8'] = '1'
+
+# Import the package
+import rcbench
+print(f'Successfully imported rcbench {rcbench.__version__}')
+          "
           # pytest --cov=rcbench
-        env:
-          # Fix encoding issues on Windows
-          PYTHONIOENCODING: utf-8
-          PYTHONUTF8: 1
 
   build_wheels:
     name: Build wheels on ${{ matrix.os }}

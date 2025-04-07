@@ -1,7 +1,7 @@
 # RCbench - Reservoir Computing Benchmark Toolkit
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![License](https://img.shields.io/badge/license-GPLv3-blue)
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-blue)
 ![Cython](https://img.shields.io/badge/built%20with-Cython-orange)
 
 
@@ -136,13 +136,6 @@ RCbench features a unified visualization system with:
   -Target vs. prediction comparisons
 All plotters are built on a common base architecture, ensuring consistent styling and behavior.
 
-## ⚡️ High Performance (Cython Integration)
-RCbench leverages Cython to accelerate performance-critical operations:
-```python
-from rcbench.tasks.c_metrics import evaluate_mc
-
-print(evaluate_mc())  # This function runs significantly faster than its pure Python counterpart.
-```
 
 ## 📝 Contributions & Issues
 Contributions are welcome! Please open a pull request or an issue on GitHub.
@@ -153,5 +146,5 @@ Contributions are welcome! Please open a pull request or an issue on GitHub.
 
 ## 📜 License
 
-RCbench is licensed under the GPLv3 License. See the LICENSE file for details.
+RCbench is licensed under the MIT License. See the LICENSE file for details.
 

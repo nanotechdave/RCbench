@@ -6,7 +6,6 @@ from typing import Dict, List, Tuple, Union, Any, Optional
 from rcbench.tasks.baseevaluator import BaseEvaluator
 from rcbench.tasks.featureselector import FeatureSelector
 from rcbench.logger import get_logger
-from rcbench.tasks.c_metrics import evaluate_mc
 from rcbench.visualization.mc_plotter import MCPlotter
 from rcbench.visualization.plot_config import MCPlotConfig
 from dataclasses import dataclass
@@ -49,6 +48,43 @@ class MemoryCapacityEvaluator(BaseEvaluator):
             self.electrode_names = [f'Electrode {i}' for i in range(nodes_output.shape[1])]
         else:
             self.electrode_names = electrode_names
+
+    def evaluate_mc(self, y_true, y_pred):
+        """
+        Evaluate memory capacity using correlation between true and predicted values.
+        
+        Parameters:
+        -----------
+        y_true : numpy.ndarray
+            True target values
+        y_pred : numpy.ndarray
+            Predicted values
+        
+        Returns:
+        --------
+        float
+            Memory capacity score, which is the squared correlation coefficient
+        """
+        n = y_true.shape[0]
+        
+        # Calculate means
+        mean_true = np.mean(y_true)
+        mean_pred = np.mean(y_pred)
+        
+        # Calculate covariance and variances
+        diff_true = y_true - mean_true
+        diff_pred = y_pred - mean_pred
+        
+        cov = np.sum(diff_true * diff_pred) / (n - 1)
+        var_true = np.sum(diff_true ** 2) / (n - 1)
+        var_pred = np.sum(diff_pred ** 2) / (n - 1)
+        
+        # Check for division by zero
+        if var_true == 0 or var_pred == 0:
+            return np.nan
+        
+        # Return squared correlation coefficient
+        return (cov ** 2) / (var_true * var_pred)
 
     def target_generator(self) -> Dict[int, np.ndarray]:
         """
@@ -105,8 +141,8 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         model.fit(X_train_selected, y_train)
         y_pred = model.predict(X_test_selected)
 
-        # Evaluate MC
-        mc = evaluate_mc(y_test, y_pred)
+        # Evaluate MC - use our integrated method instead of imported function
+        mc = self.evaluate_mc(y_test, y_pred)
 
         result = {
             'delay': delay,

@@ -17,7 +17,6 @@ rcbench/measurements/loader.py
 rcbench/measurements/parser.py
 rcbench/tasks/__init__.py
 rcbench/tasks/baseevaluator.py
-rcbench/tasks/c_metrics.c
 rcbench/tasks/featureselector.py
 rcbench/tasks/generalizationrank.py
 rcbench/tasks/kernelrank.py
@@ -34,3 +33,5 @@ rcbench/visualization/narma_plotter.py
 rcbench/visualization/nlt_plotter.py
 rcbench/visualization/plot_config.py
 rcbench/visualization/sinx_plotter.py
+tests/test_electrode_selection.py
+tests/test_reservoir_dataset_consistency.py

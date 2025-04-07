@@ -1,4 +1,4 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: rcbench
 Version: 0.0.10
 Summary: Reservoir computing benchmark toolkit
@@ -6,13 +6,35 @@ Home-page: https://github.com/nanotechdave/RCbench
 Author: Davide Pilati
 Author-email: davide.pilati@polito.it
 License: MIT
-Platform: UNKNOWN
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: matplotlib
+Requires-Dist: scikit-learn
+Requires-Dist: pandas
+Provides-Extra: test
+Requires-Dist: pytest; extra == "test"
+Requires-Dist: pytest-cov; extra == "test"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
 
 # RCbench - Reservoir Computing Benchmark Toolkit
 
@@ -168,6 +190,6 @@ Contributions are welcome! Please open a pull request or an issue on GitHub.
 - Pull Requests: https://github.com/nanotechdave/RCbench/pulls
 
 ## 📜 License
-RCbench is licensed under the GPLv3 License. See the LICENSE file for details.
 
+RCbench is licensed under the GPLv3 License. See the LICENSE file for details.
 

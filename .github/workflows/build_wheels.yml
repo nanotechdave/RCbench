@@ -33,9 +33,9 @@ jobs:
         env:
           CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-*"
           CIBW_SKIP: "*-musllinux_*"
-          CIBW_BEFORE_BUILD: pip install numpy cython
-          CIBW_TEST_REQUIRES: pytest
-          CIBW_TEST_COMMAND: "pytest {package}/tests"
+          CIBW_BEFORE_BUILD: "pip install numpy cython"
+          # Skip tests since there's no tests directory yet
+          CIBW_TEST_SKIP: "*"
 
       - uses: actions/upload-artifact@v3
         with:

@@ -15,7 +15,7 @@ __pycache__/
 # Build and distribution folders
 build/
 dist/
-*.egg-info/
+rcbench.egg-info/
 
 # VSCode settings (optional but recommended)
 .vscode/

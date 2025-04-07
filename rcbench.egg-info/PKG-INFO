@@ -11,6 +11,7 @@ Classifier: Programming Language :: Python :: 3.9
 Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
 Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
@@ -23,6 +24,10 @@ Requires-Dist: pandas
 Provides-Extra: test
 Requires-Dist: pytest; extra == "test"
 Requires-Dist: pytest-cov; extra == "test"
+Provides-Extra: dev
+Requires-Dist: bump2version; extra == "dev"
+Requires-Dist: twine; extra == "dev"
+Requires-Dist: build; extra == "dev"
 Dynamic: author
 Dynamic: author-email
 Dynamic: classifier
@@ -38,9 +43,8 @@ Dynamic: summary
 
 # RCbench - Reservoir Computing Benchmark Toolkit
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![License](https://img.shields.io/badge/license-GPLv3-blue)
-![Cython](https://img.shields.io/badge/built%20with-Cython-orange)
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 
 **RCbench (Reservoir Computing Benchmark Toolkit)** is a comprehensive Python package for evaluating and benchmarking reservoir computing systems. It provides standardized tasks, flexible visualization tools, and efficient evaluation methods for both physical and simulated reservoirs.
@@ -174,13 +178,6 @@ RCbench features a unified visualization system with:
   -Target vs. prediction comparisons
 All plotters are built on a common base architecture, ensuring consistent styling and behavior.
 
-## ⚡️ High Performance (Cython Integration)
-RCbench leverages Cython to accelerate performance-critical operations:
-```python
-from rcbench.tasks.c_metrics import evaluate_mc
-
-print(evaluate_mc())  # This function runs significantly faster than its pure Python counterpart.
-```
 
 ## 📝 Contributions & Issues
 Contributions are welcome! Please open a pull request or an issue on GitHub.
@@ -191,5 +188,5 @@ Contributions are welcome! Please open a pull request or an issue on GitHub.
 
 ## 📜 License
 
-RCbench is licensed under the GPLv3 License. See the LICENSE file for details.
+RCbench is licensed under the MIT License. See the LICENSE file for details.
 

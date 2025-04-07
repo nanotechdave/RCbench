@@ -38,7 +38,7 @@ jobs:
           # Skip tests since there's no tests directory yet
           CIBW_TEST_SKIP: "*"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}
           path: ./wheelhouse/*.whl
@@ -62,7 +62,7 @@ jobs:
       - name: Build sdist
         run: python -m build --sdist
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: sdist
           path: dist/*.tar.gz 

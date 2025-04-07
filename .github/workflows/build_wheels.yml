@@ -1,5 +1,6 @@
 name: Build Wheels
 
+# GitHub Actions workflow for building wheels with cibuildwheel
 on:
   push:
     branches: [ main ]

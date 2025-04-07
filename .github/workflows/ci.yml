@@ -26,12 +26,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12']
-        include:
-          # Add Python 3.13-dev as an experimental test that's allowed to fail
-          - os: ubuntu-latest
-            python-version: '3.13-dev'
-            experimental: true
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        
 
     steps:
       - uses: actions/checkout@v4

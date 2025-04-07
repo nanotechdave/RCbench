@@ -9,6 +9,12 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# Set permissions to minimum required
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -28,6 +34,9 @@ jobs:
 
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel
+
+      - name: Create wheelhouse directory
+        run: mkdir -p wheelhouse
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
@@ -58,6 +67,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install build numpy cython
+
+      - name: Create dist directory
+        run: mkdir -p dist
 
       - name: Build sdist
         run: python -m build --sdist

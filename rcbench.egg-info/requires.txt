@@ -4,6 +4,11 @@ matplotlib
 scikit-learn
 pandas
 
+[dev]
+bump2version
+twine
+build
+
 [test]
 pytest
 pytest-cov

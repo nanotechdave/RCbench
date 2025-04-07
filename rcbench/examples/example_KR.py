@@ -29,13 +29,31 @@ nodes_output = dataset.get_node_voltages()
 primary_input_electrode = electrodes_info['input_electrodes'][0]
 input_signal = input_voltages[primary_input_electrode]
 
-# Computing kernel rank via kernel rank evaluator (using generalization rank for svd)
-
-general = GeneralizationRankEvaluator(nodes_output)
-resultgen = general.run_evaluation()
-
+# Computing kernel rank via KernelRankEvaluator (now using SVD)
 logger.output(f"Kernel Analysis:")
-logger.output(f"  - Rank: {resultgen['generalization_rank']}\n")
+
+# Using KernelRankEvaluator with linear kernel
+kr_evaluator = KernelRankEvaluator(nodes_output, kernel='linear', threshold=1e-6)
+kr_results = kr_evaluator.run_evaluation()
+logger.output(f"  - KernelRank (linear kernel): {kr_results['kernel_rank']}")
+logger.output(f"  - First few singular values: {kr_results['singular_values'][:5]}")
+
+# Using KernelRankEvaluator with RBF kernel
+kr_evaluator_rbf = KernelRankEvaluator(nodes_output, kernel='rbf', sigma=1.0, threshold=1e-6)
+kr_results_rbf = kr_evaluator_rbf.run_evaluation()
+logger.output(f"  - KernelRank (RBF kernel): {kr_results_rbf['kernel_rank']}")
+
+# Computing generalization rank for comparison
+general = GeneralizationRankEvaluator(nodes_output, threshold=1e-6)
+result_gen = general.run_evaluation()
+logger.output(f"  - GeneralizationRank: {result_gen['generalization_rank']}")
+logger.output(f"  - First few singular values: {result_gen['singular_values'][:5]}\n")
+
+# Compare outputs
+logger.output(f"Comparison between ranks:")
+logger.output(f"  - KernelRank (linear): {kr_results['kernel_rank']}")
+logger.output(f"  - KernelRank (RBF): {kr_results_rbf['kernel_rank']}")
+logger.output(f"  - GeneralizationRank: {result_gen['generalization_rank']}")
 
 
 

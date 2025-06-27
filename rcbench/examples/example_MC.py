@@ -35,8 +35,8 @@ logger.info(f"Node electrodes: {electrode_names}")
 
 # Create MC plot configuration
 plot_config = MCPlotConfig(
-    save_dir=None,  # Save plots to this directory
-    
+    save_dir=None,
+    figsize=(10, 8),  # Save plots to this directory
     # MC-specific plot options
     plot_mc_curve=True,          # Plot the memory capacity vs delay curve
     plot_predictions=True,        # Plot predictions for each delay

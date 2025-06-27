@@ -126,7 +126,7 @@ class MCPlotter(BasePlotter):
             title=title, 
             save_path=save_path,
             sample_count=sample_count,
-            x_label='Time',
+            x_label='Sample',
             y_label='Value'
         )
     

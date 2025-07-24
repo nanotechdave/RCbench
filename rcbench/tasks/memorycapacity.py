@@ -19,7 +19,7 @@ class MemoryCapacityEvaluator(BaseEvaluator):
                  nodes_output: np.ndarray, 
                  max_delay: int = 30,
                  random_state: int = 42,
-                 electrode_names: Optional[List[str]] = None,
+                 node_names: Optional[List[str]] = None,
                  plot_config: Optional[MCPlotConfig] = None) -> None:
         """
         Initializes the Memory Capacity evaluator.
@@ -29,10 +29,10 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         - nodes_output (np.ndarray): Reservoir node output (features).
         - max_delay (int): Maximum delay steps to evaluate.
         - random_state (int): Random seed for reproducibility.
-        - electrode_names (Optional[List[str]]): Names of electrodes for plotting.
+                    - node_names (Optional[List[str]]): Names of nodes for plotting.
         - plot_config (Optional[MCPlotConfig]): Configuration for plotting.
         """
-        super().__init__(input_signal, nodes_output, electrode_names)
+        super().__init__(input_signal, nodes_output, node_names)
         self.max_delay: int = max_delay
         self.random_state = random_state
         self.targets = self.target_generator()
@@ -43,11 +43,11 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         self.evaluation_results = None
         self.mc_matrix = None
         
-        # Store electrode names if provided, otherwise create default ones
-        if electrode_names is None:
-            self.electrode_names = [f'Electrode {i}' for i in range(nodes_output.shape[1])]
+        # Store node names if provided, otherwise create default ones
+        if node_names is None:
+            self.node_names = [f'Node {i}' for i in range(nodes_output.shape[1])]
         else:
-            self.electrode_names = electrode_names
+            self.node_names = node_names
 
     def evaluate_mc(self, y_true, y_pred):
         """
@@ -117,14 +117,32 @@ class MemoryCapacityEvaluator(BaseEvaluator):
 
         target_waveform = self.targets[delay]
         
-        # Adjust data for delay
-        X = self.nodes_output[delay:]
-        y = target_waveform[delay:]
+        # CRITICAL FIX: Use the SAME reservoir data window for all delays
+        # Only the target should be different (shifted input signal)
+        # This ensures that y_test shows the same waveform pattern, just shifted
+        
+        # Use data from max_delay onwards to ensure we have valid data for all delays
+        start_idx = self.max_delay
+        data_length = len(self.input_signal) - self.max_delay
+        fixed_split_idx = int(train_ratio * data_length)
+        
+        # Use the SAME X (reservoir states) for all delays - this is the key fix!
+        X = self.nodes_output[start_idx:start_idx + data_length]
+        
+        # Only y changes - it's the delayed version of the input signal
+        # For the target, we need to account for the delay offset
+        y = target_waveform[start_idx:start_idx + data_length]
 
-        # Split data
-        split_idx = int(train_ratio * len(y))
-        X_train, X_test = X[:split_idx], X[split_idx:]
-        y_train, y_test = y[:split_idx], y[split_idx:]
+        # Split data using fixed split point
+        X_train, X_test = X[:fixed_split_idx], X[fixed_split_idx:]
+        y_train, y_test = y[:fixed_split_idx], y[fixed_split_idx:]
+
+        # === NEW: keep track of the absolute time indices for the y_test window ===
+        # This allows consistent xdaxes across different delays when plotting.
+        # For memory capacity visualization, we want to show that targets are shifted versions
+        # of the original input. So we use a common time base for all delays.
+        test_time_idx = np.arange(start_idx + fixed_split_idx,
+                                  start_idx + fixed_split_idx + len(y_test))
 
         # Apply feature selection to training and test data
         X_train_selected = self.apply_feature_selection(X_train)
@@ -150,6 +168,7 @@ class MemoryCapacityEvaluator(BaseEvaluator):
             'model': model,
             'y_pred': y_pred,
             'y_test': y_test,
+            'time_test': test_time_idx,
         }
 
         return result
@@ -234,7 +253,7 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         # First generate the general reservoir property plots
         # Create node outputs dictionary for visualization
         node_outputs = {}
-        for i, name in enumerate(self.electrode_names):
+        for i, name in enumerate(self.node_names):
             node_outputs[name] = self.nodes_output[:, i]
         
         # Plot general reservoir properties if enabled
@@ -342,9 +361,11 @@ class MemoryCapacityEvaluator(BaseEvaluator):
             
             for delay in range(1, max_delays_to_plot + 1):
                 result = all_results[delay]  # Use stored result instead of recomputing
+                # Use the stored absolute time indices so that waveforms are aligned across delays
                 self.plotter.plot_prediction_results(
                     y_true=result['y_test'],
                     y_pred=result['y_pred'],
+                    time=result.get('time_test', None),
                     title=f'Prediction Results for Delay {delay}',
                     save_path=self.plotter.config.get_save_path(f"prediction_delay_{delay}.png")
                 )

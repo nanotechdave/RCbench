@@ -7,18 +7,18 @@ from rcbench.measurements.loader import MeasurementLoader
 from rcbench.measurements.parser import MeasurementParser
 from rcbench.tasks.memorycapacity import MemoryCapacityEvaluator
 from rcbench.tasks.featureselector import FeatureSelector
-from rcbench.measurements.dataset import ReservoirDataset
+from rcbench.measurements.dataset import ElecResDataset
 
 
 @pytest.fixture
 def reservoir_dataset():
-    """Load measurement data for testing using the ReservoirDataset class."""
+    """Load measurement data for testing using the ElecResDataset class."""
     BASE_DIR = Path(__file__).resolve().parent.parent
     filename = "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
     measurement_file = BASE_DIR / "tests" / "test_files" / filename
     
-    # Load the data directly using the ReservoirDataset class
-    dataset = ReservoirDataset(measurement_file)
+    # Load the data directly using the ElecResDataset class
+    dataset = ElecResDataset(measurement_file)
     return dataset
 
 
@@ -40,40 +40,40 @@ def parsed_data(measurement_data):
     # Create a dictionary to hold the parser data using the updated static methods
     parser_data = {
         'dataframe': measurement_data.dataframe,
-        'electrodes': MeasurementParser.identify_electrodes(measurement_data.dataframe)
+        'nodes': MeasurementParser.identify_nodes(measurement_data.dataframe)
     }
     
     # Add methods to get data from the dataset
     parser_data['get_input_voltages'] = lambda: MeasurementParser.get_input_voltages(
-        measurement_data.dataframe, parser_data['electrodes']['input_electrodes'])
+        measurement_data.dataframe, parser_data['nodes']['input_nodes'])
     
     parser_data['get_node_voltages'] = lambda: MeasurementParser.get_node_voltages(
-        measurement_data.dataframe, parser_data['electrodes']['node_electrodes'])
+        measurement_data.dataframe, parser_data['nodes']['nodes'])
     
-    parser_data['summary'] = lambda: parser_data['electrodes']
+    parser_data['summary'] = lambda: parser_data['nodes']
     
     return parser_data
 
 
-def test_electrode_names_consistency(parsed_data):
-    """Test that electrode names are consistent between parser and feature selection."""
+def test_node_names_consistency(parsed_data):
+    """Test that node names are consistent between parser and feature selection."""
     # Get data from parser
-    electrodes_info = parsed_data['summary']()
-    node_electrodes = electrodes_info['node_electrodes']
+    nodes_info = parsed_data['summary']()
+    nodes = nodes_info['nodes']
     
-    # Check that node_electrodes is not empty
-    assert len(node_electrodes) > 0, "No node electrodes found in parser output"
+    # Check that nodes is not empty
+    assert len(nodes) > 0, "No computation nodes found in parser output"
     
-    # Print node electrodes for debug purposes
-    print(f"Node electrodes from parser: {node_electrodes}")
+    # Print nodes for debug purposes
+    print(f"Computation nodes from parser: {nodes}")
     
     # Get input and node outputs
     input_voltages = parsed_data['get_input_voltages']()
     nodes_output = parsed_data['get_node_voltages']()
     
     # Get input signal
-    primary_input_electrode = electrodes_info['input_electrodes'][0]
-    input_signal = input_voltages[primary_input_electrode]
+    primary_input_node = nodes_info['input_nodes'][0]
+    input_signal = input_voltages[primary_input_node]
     
     # Create dummy target for testing
     y = np.sin(input_signal)
@@ -85,7 +85,7 @@ def test_electrode_names_consistency(parsed_data):
     X_selected, selected_indices, selected_names = feature_selector.select_features(
         X=nodes_output,
         y=y,
-        electrode_names=node_electrodes,
+        node_names=nodes,
         method='pca',
         num_features='all'
     )
@@ -94,31 +94,31 @@ def test_electrode_names_consistency(parsed_data):
     print(f"Selected indices: {selected_indices}")
     print(f"Selected names: {selected_names}")
     
-    # Verify all selected electrodes are in the original node_electrodes list
+    # Verify all selected nodes are in the original nodes list
     for name in selected_names:
-        assert name in node_electrodes, f"Selected electrode {name} not found in node_electrodes"
+        assert name in nodes, f"Selected node {name} not found in nodes"
     
-    # Create a mapping of indices to electrode names
-    electrode_map = {i: name for i, name in enumerate(node_electrodes)}
+    # Create a mapping of indices to node names
+    node_map = {i: name for i, name in enumerate(nodes)}
     
-    # Verify indices match electrode names
+    # Verify indices match node names
     for idx, name in zip(selected_indices, selected_names):
-        assert electrode_map[idx] == name, f"Mismatch: index {idx} maps to {electrode_map[idx]}, not {name}"
+        assert node_map[idx] == name, f"Mismatch: index {idx} maps to {node_map[idx]}, not {name}"
 
 
-def test_memorycapacity_evaluator_electrode_selection(parsed_data):
-    """Test that MemoryCapacityEvaluator selects the correct electrodes."""
+def test_memorycapacity_evaluator_node_selection(parsed_data):
+    """Test that MemoryCapacityEvaluator selects the correct nodes."""
     # Get data from parser
-    electrodes_info = parsed_data['summary']()
-    node_electrodes = electrodes_info['node_electrodes']
-    
+    nodes_info = parsed_data['summary']()
+    nodes = nodes_info['nodes']
+
     # Get input and node outputs
     input_voltages = parsed_data['get_input_voltages']()
     nodes_output = parsed_data['get_node_voltages']()
-    
+
     # Get input signal
-    primary_input_electrode = electrodes_info['input_electrodes'][0]
-    input_signal = input_voltages[primary_input_electrode]
+    primary_input_node = nodes_info['input_nodes'][0]
+    input_signal = input_voltages[primary_input_node]
     
     # Create MC evaluator
     evaluator = MemoryCapacityEvaluator(
@@ -126,44 +126,44 @@ def test_memorycapacity_evaluator_electrode_selection(parsed_data):
         nodes_output,
         max_delay=5,  # Use a small value for testing
         random_state=42,
-        electrode_names=node_electrodes
+        node_names=nodes
     )
     
     # Run memory capacity calculation
     results = evaluator.calculate_total_memory_capacity(
         feature_selection_method='pca',
-        num_features=len(node_electrodes),  # Select all electrodes
+        num_features=len(nodes),  # Select all nodes
         regression_alpha=0.1,
         train_ratio=0.8
     )
     
-    # Check that selected feature names match a subset of node_electrodes
-    assert all(name in node_electrodes for name in evaluator.selected_feature_names), \
-        "Selected feature names don't match node electrodes"
+    # Check that selected feature names match a subset of nodes
+    assert all(name in nodes for name in evaluator.selected_feature_names), \
+        "Selected feature names don't match nodes"
     
     # Check that number of selected features matches num_features
-    assert len(evaluator.selected_feature_names) == len(node_electrodes), \
-        f"Expected {len(node_electrodes)} selected features, got {len(evaluator.selected_feature_names)}"
+    assert len(evaluator.selected_feature_names) == len(nodes), \
+        f"Expected {len(nodes)} selected features, got {len(evaluator.selected_feature_names)}"
     
     # Check that indices and names correspond
     for idx, name in zip(evaluator.selected_features, evaluator.selected_feature_names):
-        assert node_electrodes[idx] == name, \
-            f"Selected index {idx} should map to {node_electrodes[idx]}, not {name}"
+        assert nodes[idx] == name, \
+            f"Selected index {idx} should map to {nodes[idx]}, not {name}"
 
 
-def test_importance_values_match_electrodes(parsed_data):
-    """Test that feature importance values match the correct electrodes."""
+def test_importance_values_match_nodes(parsed_data):
+    """Test that feature importance values match the correct nodes."""
     # Get data from parser
-    electrodes_info = parsed_data['summary']()
-    node_electrodes = electrodes_info['node_electrodes']
-    
+    nodes_info = parsed_data['summary']()
+    nodes = nodes_info['nodes']
+
     # Get input and node outputs
     input_voltages = parsed_data['get_input_voltages']()
     nodes_output = parsed_data['get_node_voltages']()
-    
+
     # Get input signal
-    primary_input_electrode = electrodes_info['input_electrodes'][0]
-    input_signal = input_voltages[primary_input_electrode]
+    primary_input_node = nodes_info['input_nodes'][0]
+    input_signal = input_voltages[primary_input_node]
     
     # Create MC evaluator
     evaluator = MemoryCapacityEvaluator(
@@ -171,13 +171,13 @@ def test_importance_values_match_electrodes(parsed_data):
         nodes_output,
         max_delay=5,  # Use a small value for testing
         random_state=42,
-        electrode_names=node_electrodes
+        node_names=nodes
     )
     
     # Run memory capacity calculation
     results = evaluator.calculate_total_memory_capacity(
         feature_selection_method='pca',
-        num_features=len(node_electrodes),  # Select all electrodes
+        num_features=len(nodes),  # Select all nodes
         regression_alpha=0.1,
         train_ratio=0.8
     )
@@ -186,10 +186,10 @@ def test_importance_values_match_electrodes(parsed_data):
     feature_importance = evaluator.feature_selector.get_feature_importance()
     
     # Check that feature importance Series has the correct index
-    assert all(name in feature_importance.index for name in node_electrodes), \
-        "Not all electrode names found in feature importance index"
+    assert all(name in feature_importance.index for name in nodes), \
+        "Not all node names found in feature importance index"
     
-    # Get the selected electrode names and their importance scores
+    # Get the selected node names and their importance scores
     selected_names = evaluator.selected_feature_names
     importance_scores = np.array([feature_importance[name] for name in selected_names])
     
@@ -197,12 +197,12 @@ def test_importance_values_match_electrodes(parsed_data):
     assert np.all(np.diff(importance_scores) <= 0), \
         "Importance scores are not in descending order"
     
-    # Create a DataFrame with electrode names and importance scores for debugging
+    # Create a DataFrame with node names and importance scores for debugging
     importance_df = pd.DataFrame({
-        'electrode': selected_names,
+        'node': selected_names,
         'importance': importance_scores
     })
-    print("\nElectrode importance scores:")
+    print("\nNode importance scores:")
     print(importance_df)
     
     # Verify consistency by running a second time
@@ -211,34 +211,34 @@ def test_importance_values_match_electrodes(parsed_data):
         nodes_output,
         max_delay=5,
         random_state=42,
-        electrode_names=node_electrodes
+        node_names=nodes
     )
     
     second_evaluator.calculate_total_memory_capacity(
         feature_selection_method='pca',
-        num_features=len(node_electrodes),
+        num_features=len(nodes),
         regression_alpha=0.1,
         train_ratio=0.8
     )
     
-    # Compare selected electrodes to ensure consistency
+    # Compare selected nodes to ensure consistency
     assert evaluator.selected_feature_names == second_evaluator.selected_feature_names, \
-        "Selected electrodes are not consistent between runs"
+        "Selected nodes are not consistent between runs"
 
 
-def test_selected_columns_match_electrode_data(parsed_data):
-    """Test that selected columns match the actual electrode data."""
+def test_selected_columns_match_node_data(parsed_data):
+    """Test that selected columns match the actual node data."""
     # Get data from parser
-    electrodes_info = parsed_data['summary']()
-    node_electrodes = electrodes_info['node_electrodes']
+    nodes_info = parsed_data['summary']()
+    nodes = nodes_info['nodes']
     
     # Get input and node outputs
     input_voltages = parsed_data['get_input_voltages']()
     nodes_output = parsed_data['get_node_voltages']()
     
     # Get input signal
-    primary_input_electrode = electrodes_info['input_electrodes'][0]
-    input_signal = input_voltages[primary_input_electrode]
+    primary_input_node = nodes_info['input_nodes'][0]
+    input_signal = input_voltages[primary_input_node]
     
     # Create dummy target for testing
     y = np.sin(input_signal)
@@ -250,18 +250,18 @@ def test_selected_columns_match_electrode_data(parsed_data):
     X_selected, selected_indices, selected_names = feature_selector.select_features(
         X=nodes_output,
         y=y,
-        electrode_names=node_electrodes,
+        node_names=nodes,
         method='pca',
-        num_features=5  # Just select a few top electrodes
+        num_features=5  # Just select a few top nodes
     )
     
     # Print for debugging
-    print(f"Original electrode names: {node_electrodes}")
+    print(f"Original node names: {nodes}")
     print(f"Selected indices: {selected_indices}")
     print(f"Selected names: {selected_names}")
     
     # Create a DataFrame with the original data
-    full_df = pd.DataFrame(nodes_output, columns=node_electrodes)
+    full_df = pd.DataFrame(nodes_output, columns=nodes)
     
     # Create a DataFrame with just the selected columns using indices
     selected_df = pd.DataFrame(X_selected, columns=selected_names)
@@ -275,28 +275,28 @@ def test_selected_columns_match_electrode_data(parsed_data):
         selected_values = selected_df[col_name].values[:5]
         
         # Print for debugging
-        print(f"\nElectrode {col_name} (index {col_idx}):")
+        print(f"\nNode {col_name} (index {col_idx}):")
         print(f"Original data (first 5): {orig_values}")
         print(f"Selected data (first 5): {selected_values}")
         
         # Check that values match
         assert np.allclose(orig_values, selected_values), \
-            f"Data mismatch for electrode {col_name} (index {col_idx})"
+            f"Data mismatch for node {col_name} (index {col_idx})"
 
 
-def test_raw_measurement_data_matches_selected_electrodes():
-    """Test that electrode data matches the raw measurement file columns."""
+def test_raw_measurement_data_matches_selected_nodes():
+    """Test that node data matches the raw measurement file columns."""
     # Load the measurement data
     BASE_DIR = Path(__file__).resolve().parent.parent
     filename = "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
     measurement_file = BASE_DIR / "tests" / "test_files" / filename
     
     # Load raw data directly from file
-    raw_df = pd.read_csv(measurement_file, sep='\s+', engine='python')
+    raw_df = pd.read_csv(measurement_file, sep=r'\s+', engine='python')
     
     # Get data from target column
-    target_electrode = '10'
-    target_column = f'{target_electrode}_V[V]'
+    target_node = '10'
+    target_column = f'{target_node}_V[V]'
     
     if target_column not in raw_df.columns:
         print(f"Available columns: {[col for col in raw_df.columns if '_V[V]' in col]}")
@@ -310,41 +310,41 @@ def test_raw_measurement_data_matches_selected_electrodes():
     loader = MeasurementLoader(measurement_file)
     dataset = loader.get_dataset()
     
-    # Get electrode information using the parser
-    electrodes_info = MeasurementParser.identify_electrodes(dataset.dataframe)
-    node_electrodes = electrodes_info['node_electrodes']
+    # Get node information using the parser
+    nodes_info = MeasurementParser.identify_nodes(dataset.dataframe)
+    nodes = nodes_info['nodes']
     
-    print(f"Node electrodes: {node_electrodes}")
+    print(f"Computation nodes: {nodes}")
     
-    # Check if target electrode is in node_electrodes
-    if target_electrode not in node_electrodes:
-        # If not, use any electrode that is available
-        target_electrode = node_electrodes[0] if node_electrodes else None
-        if not target_electrode:
-            pytest.skip("No node electrodes available for testing")
+    # Check if target node is in nodes
+    if target_node not in nodes:
+        # If not, use any node that is available
+        target_node = nodes[0] if nodes else None
+        if not target_node:
+            pytest.skip("No computation nodes available for testing")
             
-    print(f"Target electrode: {target_electrode}")
+    print(f"Target node: {target_node}")
     
     # Get input and node outputs using static methods
-    input_voltages = MeasurementParser.get_input_voltages(dataset.dataframe, electrodes_info['input_electrodes'])
-    nodes_output = MeasurementParser.get_node_voltages(dataset.dataframe, node_electrodes)
+    input_voltages = MeasurementParser.get_input_voltages(dataset.dataframe, nodes_info['input_nodes'])
+    nodes_output = MeasurementParser.get_node_voltages(dataset.dataframe, nodes)
     
     # Get individual node voltage arrays directly from the dataframe
     node_voltages = {}
-    for node in node_electrodes:
+    for node in nodes:
         col = f'{node}_V[V]'
         if col in dataset.dataframe.columns:
             node_voltages[node] = dataset.dataframe[col].values
         else:
             print(f"Could not get voltage for node {node}: Column {col} not found")
     
-    # Get index of target electrode in node_electrodes list
-    target_idx = node_electrodes.index(target_electrode)
+    # Get index of target node in nodes list
+    target_idx = nodes.index(target_node)
     
-    # Get values directly from the dataframe for our target electrode
-    target_voltage = node_voltages.get(target_electrode, None)
+    # Get values directly from the dataframe for our target node
+    target_voltage = node_voltages.get(target_node, None)
     if target_voltage is None:
-        pytest.skip(f"Could not get voltage data for electrode {target_electrode}")
+        pytest.skip(f"Could not get voltage data for node {target_node}")
     
     # Get values from nodes_output (matrix of all node readings)
     nodes_values = nodes_output[:10, target_idx]
@@ -356,23 +356,23 @@ def test_raw_measurement_data_matches_selected_electrodes():
     print(f"Node values from nodes_output matrix (first 10): {nodes_values}")
     print(f"Original target values from raw file (first 10): {target[:10]}")
     
-    # Verify that raw data from the file matches node output for the target electrode
+    # Verify that raw data from the file matches node output for the target node
     assert np.allclose(target[:10], nodes_values, rtol=1e-5, atol=1e-5), \
-        f"Data mismatch between raw file data and nodes_output for electrode {target_electrode}"
+        f"Data mismatch between raw file data and nodes_output for node {target_node}"
     
     # Verify that raw values from dataframe match nodes_output
     assert np.allclose(raw_values, nodes_values, rtol=1e-5, atol=1e-5), \
-        f"Data mismatch between dataframe and nodes_output for electrode {target_electrode}"
+        f"Data mismatch between dataframe and nodes_output for node {target_node}"
     
     # Now run feature selection
-    y = np.sin(input_voltages[electrodes_info['input_electrodes'][0]])  # Use sine of input as target
+    y = np.sin(input_voltages[nodes_info['input_nodes'][0]])  # Use sine of input as target
     
     # Run feature selection
     feature_selector = FeatureSelector(random_state=42)
     X_selected, selected_indices, selected_names = feature_selector.select_features(
         X=nodes_output,
         y=y,
-        electrode_names=node_electrodes,
+        node_names=nodes,
         method='pca',
         num_features='all'
     )
@@ -380,10 +380,10 @@ def test_raw_measurement_data_matches_selected_electrodes():
     print(f"Selected indices: {selected_indices}")
     print(f"Selected names: {selected_names}")
     
-    # Check if target electrode was selected
-    if target_electrode in selected_names:
-        # Get the index of the target electrode in the selected features
-        selected_idx = selected_names.index(target_electrode)
+    # Check if target node was selected
+    if target_node in selected_names:
+        # Get the index of the target node in the selected features
+        selected_idx = selected_names.index(target_node)
         
         # Get values from selected features
         selected_values = X_selected[:10, selected_idx]
@@ -392,37 +392,37 @@ def test_raw_measurement_data_matches_selected_electrodes():
         
         # Verify raw file data matches selected values
         assert np.allclose(target[:10], selected_values, rtol=1e-5, atol=1e-5), \
-            f"Data mismatch between raw file data and selected feature values for electrode {target_electrode}"
+            f"Data mismatch between raw file data and selected feature values for node {target_node}"
         
         # Verify that raw values match selected feature values
         assert np.allclose(raw_values, selected_values, rtol=1e-5, atol=1e-5), \
-            f"Data mismatch between dataframe and selected feature values for electrode {target_electrode}"
+            f"Data mismatch between dataframe and selected feature values for node {target_node}"
         
         # Double check that nodes_output matches selected values
         assert np.allclose(nodes_values, selected_values, rtol=1e-5, atol=1e-5), \
-            f"Data mismatch between nodes_output and selected feature values for electrode {target_electrode}"
-            
-        print(f"\n✅ VERIFIED: Original raw data for '{target_column}' matches node voltage for electrode '{target_electrode}' through all processing stages")
+            f"Data mismatch between nodes_output and selected feature values for node {target_node}"
+        
+        print(f"\n✅ VERIFIED: Original raw data for '{target_column}' matches node voltage for node '{target_node}' through all processing stages")
     else:
-        # If electrode 10 wasn't selected, check any electrode that was selected
+        # If node 10 wasn't selected, check any node that was selected
         if selected_names and selected_indices:
-            test_electrode = selected_names[0]
+            test_node = selected_names[0]
             test_idx = selected_indices[0]
-            node_idx = node_electrodes.index(test_electrode)
+            node_idx = nodes.index(test_node)
             
-            # Get the raw data for this test electrode
-            test_column = f'{test_electrode}_V[V]'
+            # Get the raw data for this test node
+            test_column = f'{test_node}_V[V]'
             test_target = raw_df[test_column].values if test_column in raw_df.columns else None
             
             if test_target is not None:
-                # Get raw values for this electrode
-                test_voltage = node_voltages.get(test_electrode, None)
+                # Get raw values for this node
+                test_voltage = node_voltages.get(test_node, None)
                 if test_voltage is not None:
                     test_raw_values = test_voltage[:10]
                     test_nodes_values = nodes_output[:10, node_idx]
                     test_selected_values = X_selected[:10, 0]  # First selected feature
                     
-                    print(f"\nTesting with alternative electrode {test_electrode}:")
+                    print(f"\nTesting with alternative node {test_node}:")
                     print(f"Raw file values (first 10): {test_target[:10]}")
                     print(f"Parser dataframe values (first 10): {test_raw_values}")
                     print(f"Nodes values (first 10): {test_nodes_values}")
@@ -430,26 +430,26 @@ def test_raw_measurement_data_matches_selected_electrodes():
                     
                     # Verify raw file data matches nodes_output 
                     assert np.allclose(test_target[:10], test_nodes_values, rtol=1e-5, atol=1e-5), \
-                        f"Data mismatch between raw file data and nodes_output for electrode {test_electrode}"
+                        f"Data mismatch between raw file data and nodes_output for node {test_node}"
                     
                     # Verify raw parser dataframe values match nodes_output
                     assert np.allclose(test_raw_values, test_nodes_values, rtol=1e-5, atol=1e-5), \
-                        f"Data mismatch between parser dataframe and nodes_output for electrode {test_electrode}"
+                        f"Data mismatch between parser dataframe and nodes_output for node {test_node}"
                     
                     # Verify nodes_output matches selected values
                     assert np.allclose(test_nodes_values, test_selected_values, rtol=1e-5, atol=1e-5), \
-                        f"Data mismatch between nodes_output and selected values for electrode {test_electrode}"
+                        f"Data mismatch between nodes_output and selected values for node {test_node}"
                         
-                    print(f"\n✅ VERIFIED: Original raw data for '{test_column}' matches node voltage for electrode '{test_electrode}' through all processing stages")
+                    print(f"\n✅ VERIFIED: Original raw data for '{test_column}' matches node voltage for node '{test_node}' through all processing stages")
             else:
-                pytest.skip(f"Could not get raw data for alternative electrode {test_electrode}")
+                pytest.skip(f"Could not get raw data for alternative node {test_node}")
         else:
-            pytest.skip("No electrodes were selected during feature selection")
+            pytest.skip("No nodes were selected during feature selection")
 
 
-def test_electrode_data_consistency_with_raw_dataframe():
+def test_node_data_consistency_with_raw_dataframe():
     """
-    Test that electrode '10' in feature selection points to the same data as '10_V[V]' column
+    Test that node '10' in feature selection points to the same data as '10_V[V]' column
     in the raw dataframe.
     """
     # Load the measurement data
@@ -465,8 +465,8 @@ def test_electrode_data_consistency_with_raw_dataframe():
     raw_df = dataset.dataframe
     
     # Check if the target column exists
-    target_electrode = '10'
-    target_column = f'{target_electrode}_V[V]'
+    target_node = '10'
+    target_column = f'{target_node}_V[V]'
     
     if target_column not in raw_df.columns:
         all_voltage_columns = [col for col in raw_df.columns if '_V[V]' in col]
@@ -477,19 +477,19 @@ def test_electrode_data_consistency_with_raw_dataframe():
     raw_values = raw_df[target_column].values[:20]  # Get first 20 values
     print(f"Raw values from DataFrame['{target_column}'] (first 20):\n{raw_values}")
     
-    # Get electrode information using the static method
-    electrodes_info = MeasurementParser.identify_electrodes(dataset.dataframe)
-    node_electrodes = electrodes_info['node_electrodes']
+    # Get node information using the static method
+    nodes_info = MeasurementParser.identify_nodes(dataset.dataframe)
+    nodes = nodes_info['nodes']
     
-    # Verify target electrode is in node_electrodes
-    if target_electrode not in node_electrodes:
-        pytest.skip(f"Target electrode {target_electrode} not found in node_electrodes")
+    # Verify target node is in nodes
+    if target_node not in nodes:
+        pytest.skip(f"Target node {target_node} not found in nodes")
     
     # Get the node output matrix using the static method
-    nodes_output = MeasurementParser.get_node_voltages(dataset.dataframe, node_electrodes)
+    nodes_output = MeasurementParser.get_node_voltages(dataset.dataframe, nodes)
     
-    # Get the index of target electrode in node_electrodes
-    target_idx = node_electrodes.index(target_electrode)
+    # Get the index of target node in nodes
+    target_idx = nodes.index(target_node)
     
     # Extract the values for this electrode from the node_output matrix
     node_values = nodes_output[:20, target_idx]
@@ -497,12 +497,12 @@ def test_electrode_data_consistency_with_raw_dataframe():
     
     # Verify raw dataframe values match parser's node output values
     assert np.allclose(raw_values, node_values, rtol=1e-5, atol=1e-5), \
-        f"Data mismatch between raw dataframe and parser's node output for electrode {target_electrode}"
+        f"Data mismatch between raw dataframe and parser's node output for node {target_node}"
     
     # Now run feature selection
-    input_voltages = MeasurementParser.get_input_voltages(dataset.dataframe, electrodes_info['input_electrodes'])
-    primary_input_electrode = electrodes_info['input_electrodes'][0]
-    input_signal = input_voltages[primary_input_electrode]
+    input_voltages = MeasurementParser.get_input_voltages(dataset.dataframe, nodes_info['input_nodes'])
+    primary_input_node = nodes_info['input_nodes'][0]
+    input_signal = input_voltages[primary_input_node]
     
     # Dummy target for feature selection
     y = np.sin(input_signal)
@@ -512,19 +512,19 @@ def test_electrode_data_consistency_with_raw_dataframe():
     X_selected, selected_indices, selected_names = feature_selector.select_features(
         X=nodes_output,
         y=y,
-        electrode_names=node_electrodes,
+        node_names=nodes,
         method='pca',
         num_features='all'
     )
     
-    print(f"Selected electrode names: {selected_names}")
+    print(f"Selected node names: {selected_names}")
     
-    # Verify electrode '10' is in the selected features
-    if target_electrode not in selected_names:
-        pytest.skip(f"Target electrode {target_electrode} was not selected by feature selection")
+    # Verify node '10' is in the selected features
+    if target_node not in selected_names:
+        pytest.skip(f"Target node {target_node} was not selected by feature selection")
     
-    # Get the index of target electrode in selected_names
-    selected_idx = selected_names.index(target_electrode)
+    # Get the index of target node in selected_names
+    selected_idx = selected_names.index(target_node)
     
     # Get values from selected features
     selected_values = X_selected[:20, selected_idx]
@@ -532,14 +532,14 @@ def test_electrode_data_consistency_with_raw_dataframe():
     
     # Final verification that raw dataframe values match selected feature values
     assert np.allclose(raw_values, selected_values, rtol=1e-5, atol=1e-5), \
-        f"Data mismatch between raw dataframe and selected feature values for electrode {target_electrode}"
+        f"Data mismatch between raw dataframe and selected feature values for node {target_node}"
     
-    print("\n✅ VERIFICATION SUCCESSFUL: Electrode '10' in feature selection points to the same data as '10_V[V]' column in raw dataframe")
+    print("\n✅ VERIFICATION SUCCESSFUL: Node '10' in feature selection points to the same data as '10_V[V]' column in raw dataframe")
 
 
-def test_all_electrodes_data_consistency():
+def test_all_nodes_data_consistency():
     """
-    Test that all electrodes in feature selection point to the same data as their
+    Test that all nodes in feature selection point to the same data as their
     corresponding columns in the raw dataframe.
     """
     # Load the measurement data
@@ -550,24 +550,24 @@ def test_all_electrodes_data_consistency():
     print(f"Looking for test file at: {measurement_file}")
     print(f"File exists: {measurement_file.exists()}")
     
-    # Load the data directly using the ReservoirDataset class
-    dataset = ReservoirDataset(measurement_file)
+    # Load the data directly using the ElecResDataset class
+    dataset = ElecResDataset(measurement_file)
     
     # Get the raw dataframe directly from the dataset
     raw_df = dataset.dataframe
     print(f"Raw dataframe shape: {raw_df.shape}")
     print(f"Raw dataframe columns (first 5): {list(raw_df.columns)[:5]}")
     
-    # Get electrode information
-    electrodes_info = dataset.summary()
-    node_electrodes = electrodes_info['node_electrodes']
+    # Get node information
+    nodes_info = dataset.summary()
+    nodes = nodes_info['nodes']
     
-    # Skip if no electrodes found
-    if not node_electrodes:
-        print("ERROR: No node electrodes found in dataset output")
-        pytest.skip("No node electrodes found")
+    # Skip if no nodes found
+    if not nodes:
+        print("ERROR: No computation nodes found in dataset output")
+        pytest.skip("No computation nodes found")
     
-    print(f"Testing data consistency for {len(node_electrodes)} electrodes: {node_electrodes}")
+    print(f"Testing data consistency for {len(nodes)} nodes: {nodes}")
     
     # Get the node output matrix
     nodes_output = dataset.get_node_voltages()
@@ -575,8 +575,8 @@ def test_all_electrodes_data_consistency():
     
     # Setup for feature selection
     input_voltages = dataset.get_input_voltages()
-    primary_input_electrode = electrodes_info['input_electrodes'][0]
-    input_signal = input_voltages[primary_input_electrode]
+    primary_input_node = nodes_info['input_nodes'][0]
+    input_signal = input_voltages[primary_input_node]
     
     # Dummy target for feature selection
     y = np.sin(input_signal)
@@ -586,31 +586,31 @@ def test_all_electrodes_data_consistency():
     X_selected, selected_indices, selected_names = feature_selector.select_features(
         X=nodes_output,
         y=y,
-        electrode_names=node_electrodes,
+        node_names=nodes,
         method='pca',
         num_features='all'
     )
     
-    print(f"Selected electrode names: {selected_names}")
+    print(f"Selected node names: {selected_names}")
     
     # Track results
     failures = []
     successes = []
     skipped = []
     
-    # Check each electrode
-    for electrode in node_electrodes:
-        column = f'{electrode}_V[V]'
+    # Check each node
+    for node in nodes:
+        column = f'{node}_V[V]'
         
         # Check if column exists in raw dataframe
         if column not in raw_df.columns:
-            print(f"⚠️ Skipping electrode {electrode}: Column {column} not found in raw dataframe")
+            print(f"⚠️ Skipping node {node}: Column {column} not found in raw dataframe")
             print(f"Available columns (first 10): {list(raw_df.columns)[:10]}")
-            skipped.append(electrode)
+            skipped.append(node)
             continue
         
-        # Get electrode index in node_electrodes list
-        node_idx = node_electrodes.index(electrode)
+        # Get node index in nodes list
+        node_idx = nodes.index(node)
         
         # Get raw values from the dataframe (limit to first 10 values for readability)
         raw_values = raw_df[column].values[:10]
@@ -618,15 +618,15 @@ def test_all_electrodes_data_consistency():
         # Get values from nodes_output
         node_values = nodes_output[:10, node_idx]
         
-        # Check if electrode is in selected features
-        if electrode not in selected_names:
-            print(f"⚠️ Skipping electrode {electrode}: Not selected by feature selection")
+        # Check if node is in selected features
+        if node not in selected_names:
+            print(f"⚠️ Skipping node {node}: Not selected by feature selection")
             print(f"Selected names: {selected_names}")
-            skipped.append(electrode)
+            skipped.append(node)
             continue
         
         # Get index in selected features
-        selected_idx = selected_names.index(electrode)
+        selected_idx = selected_names.index(node)
         
         # Get values from selected features
         selected_values = X_selected[:10, selected_idx]
@@ -639,29 +639,29 @@ def test_all_electrodes_data_consistency():
             assert np.allclose(raw_values, selected_values, rtol=1e-5, atol=1e-5)
             
             # Success!
-            successes.append(electrode)
-            print(f"✅ Electrode {electrode}: Data consistent across raw dataframe, nodes output, and feature selection")
+            successes.append(node)
+            print(f"✅ Node {node}: Data consistent across raw dataframe, nodes output, and feature selection")
             
         except AssertionError as e:
-            failures.append(electrode)
-            print(f"❌ Electrode {electrode}: Data mismatch detected")
+            failures.append(node)
+            print(f"❌ Node {node}: Data mismatch detected")
             print(f"  Raw values: {raw_values}")
             print(f"  Node values: {node_values}")
             print(f"  Selected values: {selected_values}")
     
     # Final report
-    print(f"\n=== ELECTRODE DATA CONSISTENCY TEST RESULTS ===")
-    print(f"✅ {len(successes)}/{len(node_electrodes)} electrodes verified successful")
+    print(f"\n=== NODE DATA CONSISTENCY TEST RESULTS ===")
+    print(f"✅ {len(successes)}/{len(nodes)} nodes verified successful")
     if skipped:
-        print(f"⚠️ {len(skipped)}/{len(node_electrodes)} electrodes skipped: {skipped}")
+        print(f"⚠️ {len(skipped)}/{len(nodes)} nodes skipped: {skipped}")
     if failures:
-        print(f"❌ {len(failures)}/{len(node_electrodes)} electrodes failed: {failures}")
+        print(f"❌ {len(failures)}/{len(nodes)} nodes failed: {failures}")
     
     # Final assertion to make the test pass/fail
-    assert not failures, f"Data mismatch found for electrodes: {failures}"
+    assert not failures, f"Data mismatch found for nodes: {failures}"
     
     # If we got here, all checks passed!
-    print("\n✅ VERIFICATION SUCCESSFUL: All checked electrodes have consistent data across all stages")
+    print("\n✅ VERIFICATION SUCCESSFUL: All checked nodes have consistent data across all stages")
 
 
 def test_measurement_file_exists():

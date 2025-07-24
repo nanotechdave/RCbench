@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from typing import List
-from rcbench.measurements.dataset import ReservoirDataset
+from rcbench.measurements.dataset import ElecResDataset
 from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
@@ -47,13 +47,13 @@ class MeasurementLoader:
         """
         return self.dataframe[self.voltage_columns].to_numpy()
     
-    def get_dataset(self) -> ReservoirDataset:
+    def get_dataset(self) -> ElecResDataset:
         """
-        Returns a ReservoirDataset instance directly.
+        Returns an ElecResDataset instance directly.
         """
         if self.dataframe is None:
             self.load_data()
-        return ReservoirDataset(
+        return ElecResDataset(
             source=self.dataframe,
             time_column=self.time_column
         )

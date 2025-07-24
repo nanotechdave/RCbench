@@ -3,25 +3,25 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-from rcbench.measurements.dataset import ReservoirDataset
+from rcbench.measurements.dataset import ElecResDataset
 from rcbench.tasks.featureselector import FeatureSelector
 
 
 @pytest.fixture
 def reservoir_dataset():
-    """Load measurement data for testing using the ReservoirDataset class."""
+    """Load measurement data for testing using the ElecResDataset class."""
     BASE_DIR = Path(__file__).resolve().parent.parent
     filename = "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
     measurement_file = BASE_DIR / "tests" / "test_files" / filename
     
-    # Load the data directly using the ReservoirDataset class
-    dataset = ReservoirDataset(measurement_file)
+    # Load the data directly using the ElecResDataset class
+    dataset = ElecResDataset(measurement_file)
     return dataset
 
 
-def test_electrode_data_consistency(reservoir_dataset):
+def test_node_data_consistency(reservoir_dataset):
     """
-    Test that all electrodes in feature selection point to the same data as their
+    Test that all nodes in feature selection point to the same data as their
     corresponding columns in the raw dataframe.
     
     This test verifies data integrity through the entire pipeline:
@@ -33,16 +33,16 @@ def test_electrode_data_consistency(reservoir_dataset):
     raw_df = reservoir_dataset.dataframe
     print(f"Raw dataframe shape: {raw_df.shape}")
     
-    # Get electrode information
-    electrodes_info = reservoir_dataset.summary()
-    node_electrodes = electrodes_info['node_electrodes']
+    # Get node information
+    nodes_info = reservoir_dataset.summary()
+    nodes = nodes_info['nodes']
     
-    # Skip if no electrodes found
-    if not node_electrodes:
-        print("ERROR: No node electrodes found in dataset")
-        pytest.skip("No node electrodes found")
+    # Skip if no nodes found
+    if not nodes:
+        print("ERROR: No computation nodes found in dataset")
+        pytest.skip("No computation nodes found")
     
-    print(f"Testing data consistency for {len(node_electrodes)} electrodes: {node_electrodes}")
+    print(f"Testing data consistency for {len(nodes)} nodes: {nodes}")
     
     # Get the node output matrix
     nodes_output = reservoir_dataset.get_node_voltages()
@@ -50,8 +50,8 @@ def test_electrode_data_consistency(reservoir_dataset):
     
     # Setup for feature selection
     input_voltages = reservoir_dataset.get_input_voltages()
-    primary_input_electrode = electrodes_info['input_electrodes'][0]
-    input_signal = input_voltages[primary_input_electrode]
+    primary_input_node = nodes_info['input_nodes'][0]
+    input_signal = input_voltages[primary_input_node]
     
     # Dummy target for feature selection
     y = np.sin(input_signal)
@@ -61,30 +61,30 @@ def test_electrode_data_consistency(reservoir_dataset):
     X_selected, selected_indices, selected_names = feature_selector.select_features(
         X=nodes_output,
         y=y,
-        electrode_names=node_electrodes,
+        node_names=nodes,
         method='pca',
         num_features='all'
     )
     
-    print(f"Selected electrode names: {selected_names}")
+    print(f"Selected node names: {selected_names}")
     
     # Track results
     failures = []
     successes = []
     skipped = []
     
-    # Check each electrode
-    for electrode in node_electrodes:
-        column = f'{electrode}_V[V]'
+    # Check each node
+    for node in nodes:
+        column = f'{node}_V[V]'
         
         # Check if column exists in raw dataframe
         if column not in raw_df.columns:
-            print(f"⚠️ Skipping electrode {electrode}: Column {column} not found in raw dataframe")
-            skipped.append(electrode)
+            print(f"⚠️ Skipping node {node}: Column {column} not found in raw dataframe")
+            skipped.append(node)
             continue
         
-        # Get electrode index in node_electrodes list
-        node_idx = node_electrodes.index(electrode)
+        # Get node index in nodes list
+        node_idx = nodes.index(node)
         
         # Get raw values from the dataframe (limit to first 10 values for readability)
         raw_values = raw_df[column].values[:10]
@@ -92,14 +92,14 @@ def test_electrode_data_consistency(reservoir_dataset):
         # Get values from nodes_output
         node_values = nodes_output[:10, node_idx]
         
-        # Check if electrode is in selected features
-        if electrode not in selected_names:
-            print(f"⚠️ Skipping electrode {electrode}: Not selected by feature selection")
-            skipped.append(electrode)
+        # Check if node is in selected features
+        if node not in selected_names:
+            print(f"⚠️ Skipping node {node}: Not selected by feature selection")
+            skipped.append(node)
             continue
         
         # Get index in selected features
-        selected_idx = selected_names.index(electrode)
+        selected_idx = selected_names.index(node)
         
         # Get values from selected features
         selected_values = X_selected[:10, selected_idx]
@@ -112,42 +112,42 @@ def test_electrode_data_consistency(reservoir_dataset):
             assert np.allclose(raw_values, selected_values, rtol=1e-5, atol=1e-5)
             
             # Success!
-            successes.append(electrode)
-            print(f"✅ Electrode {electrode}: Data consistent across raw dataframe, nodes output, and feature selection")
+            successes.append(node)
+            print(f"✅ Node {node}: Data consistent across raw dataframe, nodes output, and feature selection")
             
         except AssertionError as e:
-            failures.append(electrode)
-            print(f"❌ Electrode {electrode}: Data mismatch detected")
+            failures.append(node)
+            print(f"❌ Node {node}: Data mismatch detected")
             print(f"  Raw values: {raw_values}")
             print(f"  Node values: {node_values}")
             print(f"  Selected values: {selected_values}")
     
     # Final report
-    print(f"\n=== ELECTRODE DATA CONSISTENCY TEST RESULTS ===")
-    print(f"✅ {len(successes)}/{len(node_electrodes)} electrodes verified successful")
+    print(f"\n=== NODE DATA CONSISTENCY TEST RESULTS ===")
+    print(f"✅ {len(successes)}/{len(nodes)} nodes verified successful")
     if skipped:
-        print(f"⚠️ {len(skipped)}/{len(node_electrodes)} electrodes skipped: {skipped}")
+        print(f"⚠️ {len(skipped)}/{len(nodes)} nodes skipped: {skipped}")
     if failures:
-        print(f"❌ {len(failures)}/{len(node_electrodes)} electrodes failed: {failures}")
+        print(f"❌ {len(failures)}/{len(nodes)} nodes failed: {failures}")
     
     # Final assertion to make the test pass/fail
-    assert not failures, f"Data mismatch found for electrodes: {failures}"
+    assert not failures, f"Data mismatch found for nodes: {failures}"
     
     # If we got here, all checks passed!
-    print("\n✅ VERIFICATION SUCCESSFUL: All checked electrodes have consistent data across all stages")
+    print("\n✅ VERIFICATION SUCCESSFUL: All checked nodes have consistent data across all stages")
 
 
-def test_specific_electrode_consistency(reservoir_dataset):
+def test_specific_node_consistency(reservoir_dataset):
     """
-    Test that a specific electrode '10' in feature selection points to the same data as '10_V[V]' column
+    Test that a specific node '10' in feature selection points to the same data as '10_V[V]' column
     in the raw dataframe.
     """
     # Get the raw dataframe directly from the dataset
     raw_df = reservoir_dataset.dataframe
     
     # Check if the target column exists
-    target_electrode = '10'
-    target_column = f'{target_electrode}_V[V]'
+    target_node = '10'
+    target_column = f'{target_node}_V[V]'
     
     if target_column not in raw_df.columns:
         all_voltage_columns = [col for col in raw_df.columns if '_V[V]' in col]
@@ -158,32 +158,32 @@ def test_specific_electrode_consistency(reservoir_dataset):
     raw_values = raw_df[target_column].values[:20]  # Get first 20 values
     print(f"Raw values from DataFrame['{target_column}'] (first 20):\n{raw_values}")
     
-    # Get electrode information
-    electrodes_info = reservoir_dataset.summary()
-    node_electrodes = electrodes_info['node_electrodes']
+    # Get node information
+    nodes_info = reservoir_dataset.summary()
+    nodes = nodes_info['nodes']
     
-    # Verify target electrode is in node_electrodes
-    if target_electrode not in node_electrodes:
-        pytest.skip(f"Target electrode {target_electrode} not found in node_electrodes")
+    # Verify target node is in nodes
+    if target_node not in nodes:
+        pytest.skip(f"Target node {target_node} not found in nodes")
     
     # Get the node output matrix
     nodes_output = reservoir_dataset.get_node_voltages()
     
-    # Get the index of target electrode in node_electrodes
-    target_idx = node_electrodes.index(target_electrode)
+    # Get the index of target node in nodes
+    target_idx = nodes.index(target_node)
     
-    # Extract the values for this electrode from the node_output matrix
+    # Extract the values for this node from the node_output matrix
     node_values = nodes_output[:20, target_idx]
     print(f"Node values from nodes_output[:, {target_idx}] (first 20):\n{node_values}")
     
     # Verify raw dataframe values match node output values
     assert np.allclose(raw_values, node_values, rtol=1e-5, atol=1e-5), \
-        f"Data mismatch between raw dataframe and node output for electrode {target_electrode}"
+        f"Data mismatch between raw dataframe and node output for node {target_node}"
     
     # Now run feature selection
     input_voltages = reservoir_dataset.get_input_voltages()
-    primary_input_electrode = electrodes_info['input_electrodes'][0]
-    input_signal = input_voltages[primary_input_electrode]
+    primary_input_node = nodes_info['input_nodes'][0]
+    input_signal = input_voltages[primary_input_node]
     
     # Dummy target for feature selection
     y = np.sin(input_signal)
@@ -193,19 +193,19 @@ def test_specific_electrode_consistency(reservoir_dataset):
     X_selected, selected_indices, selected_names = feature_selector.select_features(
         X=nodes_output,
         y=y,
-        electrode_names=node_electrodes,
+        node_names=nodes,
         method='pca',
         num_features='all'
     )
     
-    print(f"Selected electrode names: {selected_names}")
+    print(f"Selected node names: {selected_names}")
     
-    # Verify electrode '10' is in the selected features
-    if target_electrode not in selected_names:
-        pytest.skip(f"Target electrode {target_electrode} was not selected by feature selection")
+    # Verify node '10' is in the selected features
+    if target_node not in selected_names:
+        pytest.skip(f"Target node {target_node} was not selected by feature selection")
     
-    # Get the index of target electrode in selected_names
-    selected_idx = selected_names.index(target_electrode)
+    # Get the index of target node in selected_names
+    selected_idx = selected_names.index(target_node)
     
     # Get values from selected features
     selected_values = X_selected[:20, selected_idx]
@@ -213,30 +213,30 @@ def test_specific_electrode_consistency(reservoir_dataset):
     
     # Final verification that raw dataframe values match selected feature values
     assert np.allclose(raw_values, selected_values, rtol=1e-5, atol=1e-5), \
-        f"Data mismatch between raw dataframe and selected feature values for electrode {target_electrode}"
+        f"Data mismatch between raw dataframe and selected feature values for node {target_node}"
     
-    # Get values directly from individual electrode method
-    individual_values = reservoir_dataset.get_node_voltage(target_electrode)[:20]
-    print(f"Individual electrode values (first 20):\n{individual_values}")
+    # Get values directly from individual node method
+    individual_values = reservoir_dataset.get_node_voltage(target_node)[:20]
+    print(f"Individual node values (first 20):\n{individual_values}")
     
     # Verify direct access method matches raw values
     assert np.allclose(raw_values, individual_values, rtol=1e-5, atol=1e-5), \
-        f"Data mismatch between raw dataframe and individual electrode values for electrode {target_electrode}"
+        f"Data mismatch between raw dataframe and individual node values for node {target_node}"
     
-    print("\n✅ VERIFICATION SUCCESSFUL: Electrode '10' data is consistent across all access methods")
+    print("\n✅ VERIFICATION SUCCESSFUL: Node '10' data is consistent across all access methods")
 
 
 def test_all_access_methods_consistent(reservoir_dataset):
     """
-    Test that all methods of accessing electrode data return consistent results.
+    Test that all methods of accessing node data return consistent results.
     """
-    # Get electrode information
-    electrodes_info = reservoir_dataset.summary()
-    node_electrodes = electrodes_info['node_electrodes']
+    # Get node information
+    nodes_info = reservoir_dataset.summary()
+    nodes = nodes_info['nodes']
     
-    # Skip if no electrodes found
-    if not node_electrodes:
-        pytest.skip("No node electrodes found")
+    # Skip if no nodes found
+    if not nodes:
+        pytest.skip("No computation nodes found")
     
     # Get the node output matrix
     nodes_output = reservoir_dataset.get_node_voltages()
@@ -245,37 +245,37 @@ def test_all_access_methods_consistent(reservoir_dataset):
     failures = []
     successes = []
     
-    # Check each electrode
-    for electrode in node_electrodes:
-        # Get electrode index in node_electrodes list
-        node_idx = node_electrodes.index(electrode)
+    # Check each node
+    for node in nodes:
+        # Get node index in nodes list
+        node_idx = nodes.index(node)
         
         # Get values from nodes_output matrix
         matrix_values = nodes_output[:10, node_idx]
         
         # Get values directly using get_node_voltage method
         try:
-            direct_values = reservoir_dataset.get_node_voltage(electrode)[:10]
+            direct_values = reservoir_dataset.get_node_voltage(node)[:10]
             
             # Verify both methods return the same data
             assert np.allclose(matrix_values, direct_values, rtol=1e-5, atol=1e-5)
             
             # Success!
-            successes.append(electrode)
+            successes.append(node)
             
         except AssertionError as e:
-            failures.append(electrode)
-            print(f"❌ Electrode {electrode}: Data mismatch detected")
+            failures.append(node)
+            print(f"❌ Node {node}: Data mismatch detected")
             print(f"  Matrix values: {matrix_values}")
             print(f"  Direct values: {direct_values}")
     
     # Final report
-    print(f"\n=== ELECTRODE ACCESS METHODS CONSISTENCY RESULTS ===")
-    print(f"✅ {len(successes)}/{len(node_electrodes)} electrodes verified consistent")
+    print(f"\n=== NODE ACCESS METHODS CONSISTENCY RESULTS ===")
+    print(f"✅ {len(successes)}/{len(nodes)} nodes verified consistent")
     if failures:
-        print(f"❌ {len(failures)}/{len(node_electrodes)} electrodes failed: {failures}")
+        print(f"❌ {len(failures)}/{len(nodes)} nodes failed: {failures}")
     
     # Final assertion to make the test pass/fail
-    assert not failures, f"Data mismatch found for electrodes: {failures}"
+    assert not failures, f"Data mismatch found for nodes: {failures}"
     
-    print("\n✅ VERIFICATION SUCCESSFUL: All electrode access methods return consistent data") 
+    print("\n✅ VERIFICATION SUCCESSFUL: All node access methods return consistent data") 

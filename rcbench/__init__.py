@@ -1,4 +1,4 @@
-__version__ = "0.0.10.dev1"
+__version__ = "0.1.10.dev1"
 
 from .utils import utils
 from .tasks.nlt import NltEvaluator
@@ -9,5 +9,5 @@ from .tasks.generalizationrank import GeneralizationRankEvaluator
 from .tasks.narma import NarmaEvaluator
 from .measurements.parser import MeasurementParser
 from .measurements.loader import MeasurementLoader
-from .measurements.dataset import ReservoirDataset
+from .measurements.dataset import ReservoirDataset, ElecResDataset
 from .logger import get_logger

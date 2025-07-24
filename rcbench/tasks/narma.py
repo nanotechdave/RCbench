@@ -85,7 +85,7 @@ class NarmaEvaluator(BaseEvaluator):
         self,
         input_signal: Union[np.ndarray, List[float]],
         nodes_output: np.ndarray,
-        electrode_names: Optional[List[str]] = None,
+        node_names: Optional[List[str]] = None,
         order: int = 2,
         alpha: float = 0.4,
         beta: float = 0.4,
@@ -99,13 +99,13 @@ class NarmaEvaluator(BaseEvaluator):
         Parameters:
             input_signal (array-like): The driving input for the NARMA system.
             nodes_output (2D array): The output of the reservoir nodes.
-            electrode_names (List[str], optional): Names of the electrodes.
+            node_names (List[str], optional): Names of the nodes.
             order (int): The order of the NARMA system (default is 10).
             alpha, beta, gamma, delta (float): coefficients for the NARMA equation.
             plot_config (Optional[NarmaPlotConfig]): Configuration for plotting.
         """
         # Call the parent class constructor
-        super().__init__(input_signal, nodes_output, electrode_names)
+        super().__init__(input_signal, nodes_output, node_names)
         
         self.order: int = order
         self.coefficients: Dict[str, float] = {'alpha': alpha,
@@ -234,7 +234,7 @@ class NarmaEvaluator(BaseEvaluator):
             
         # Create node outputs dictionary for visualization
         node_outputs = {}
-        for i, name in enumerate(self.electrode_names):
+        for i, name in enumerate(self.node_names):
             node_outputs[name] = self.nodes_output[:, i]
             
         # Get test data from results

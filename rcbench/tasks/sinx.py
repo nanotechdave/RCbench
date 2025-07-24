@@ -15,7 +15,7 @@ class SinxEvaluator(BaseEvaluator):
     def __init__(self, 
                  input_signal: Union[np.ndarray, List[float]], 
                  nodes_output: np.ndarray,
-                 electrode_names: Optional[List[str]] = None,
+                 node_names: Optional[List[str]] = None,
                  plot_config: Optional[SinxPlotConfig] = None
                  ) -> None:
         """
@@ -24,10 +24,10 @@ class SinxEvaluator(BaseEvaluator):
         Parameters:
         - input_signal (np.ndarray): Random white noise input signal.
         - nodes_output (np.ndarray): Reservoir node voltages (features).
-        - electrode_names (Optional[List[str]]): Names of electrodes for nodes.
+        - node_names (Optional[List[str]]): Names of nodes.
         - plot_config (Optional[SinxPlotConfig]): Configuration for plotting.
         """
-        super().__init__(input_signal, nodes_output, electrode_names)
+        super().__init__(input_signal, nodes_output, node_names)
         self.normalized_input = self._normalize_input(self.input_signal)
         self.target = np.sin(self.normalized_input)
         
@@ -116,7 +116,7 @@ class SinxEvaluator(BaseEvaluator):
         
         # Create node outputs dictionary for visualization
         node_outputs = {}
-        for i, name in enumerate(self.electrode_names):
+        for i, name in enumerate(self.node_names):
             node_outputs[name] = self.nodes_output[:, i]
             
         # Get test data from results

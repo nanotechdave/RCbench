@@ -20,7 +20,7 @@ class NltEvaluator(BaseEvaluator):
                  nodes_output: np.ndarray, 
                  time_array: Union[np.ndarray, List[float]], 
                  waveform_type: str = 'sine',
-                 electrode_names: List[str] = None,
+                 node_names: List[str] = None,
                  plot_config: Optional[NLTPlotConfig] = None,
                  ) -> None:
         """
@@ -31,15 +31,15 @@ class NltEvaluator(BaseEvaluator):
             nodes_output: The reservoir nodes output.
             time_array: The time values corresponding to signals.
             waveform_type: Type of waveform, 'sine' (default) or 'triangular'.
-            electrode_names: Optional list of electrode names.
+            node_names: Optional list of node names.
             plot_config: Optional configuration for plotting.
         """
         # Initialize electrode names if not provided
-        if electrode_names is None:
-            electrode_names = [f'el_{i}' for i in range(nodes_output.shape[1])]
+        if node_names is None:
+            node_names = [f'node_{i}' for i in range(nodes_output.shape[1])]
         
         # Call the parent class constructor
-        super().__init__(input_signal, nodes_output, electrode_names)
+        super().__init__(input_signal, nodes_output, node_names)
         
         self.time = time_array
         self.waveform_type = waveform_type
@@ -246,7 +246,7 @@ class NltEvaluator(BaseEvaluator):
         
         # Create node outputs dictionary for visualization
         node_outputs = {}
-        for i, name in enumerate(self.electrode_names):
+        for i, name in enumerate(self.node_names):
             node_outputs[name] = self.nodes_output[:, i]
         
         # First create general plots with the full dataset (not target-specific)

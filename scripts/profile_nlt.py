@@ -11,7 +11,7 @@ measurement_file = BASE_DIR.parent / "tests" / "test_files" / filename
 dataset = MeasurementLoader(measurement_file).get_dataset()
 parser = MeasurementParser(dataset)
 
-input_signal = parser.get_input_voltages()[parser.input_electrodes[0]]
+input_signal = parser.get_input_voltages()[parser.input_nodes[0]]
 nodes_output = parser.get_node_voltages()
 time_array = dataset.time
 

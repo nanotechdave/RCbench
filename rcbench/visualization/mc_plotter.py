@@ -100,7 +100,25 @@ class MCPlotter(BasePlotter):
             save_path (Optional[str]): Path to save the plot
             sample_count (Optional[int]): Number of samples to show (for large datasets)
         """
+        # For memory capacity plots, adjust the time axis to show the shift relationship
+        # Extract delay number from title
+        if title and 'Delay' in title:
+            try:
+                delay_value = int(title.split()[-1])
+                if time is not None:
+                    # Shift the time axis by the delay amount to show the temporal relationship
+                    # This makes it clear that each delay is the same waveform shifted in time
+                    time = time - delay_value
+            except (ValueError, IndexError):
+                pass  # If we can't parse delay, use original time
+        
         sample_count = sample_count or self.config.prediction_sample_count
+        
+        # For memory capacity plots, disable sampling to preserve shift relationships
+        # The sampling destroys the temporal alignment between different delays
+        if title and 'Delay' in title:
+            sample_count = None  # Disable sampling for MC plots
+        
         self.plot_target_prediction(
             y_true, 
             y_pred, 
@@ -108,7 +126,7 @@ class MCPlotter(BasePlotter):
             title=title, 
             save_path=save_path,
             sample_count=sample_count,
-            x_label='Time',
+            x_label='Sample',
             y_label='Value'
         )
     

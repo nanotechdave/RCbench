@@ -15,23 +15,23 @@ class BaseEvaluator:
     def __init__(self, 
                 input_signal: np.ndarray, 
                 nodes_output: np.ndarray,
-                electrode_names: Optional[List[str]] = None):
+                node_names: Optional[List[str]] = None):
         """
         Initialize the BaseEvaluator.
         
         Args:
             input_signal (np.ndarray): Input signal.
             nodes_output (np.ndarray): Output of the nodes.
-            electrode_names (Optional[List[str]]): Names of the electrodes.
+            node_names (Optional[List[str]]): Names of the nodes.
         """
         self.input_signal: np.ndarray = input_signal
         self.nodes_output: np.ndarray = nodes_output
         
-        # Create electrode names if not provided
-        if electrode_names is None:
-            self.electrode_names = [f'Electrode {i}' for i in range(nodes_output.shape[1])]
+        # Create node names if not provided
+        if node_names is None:
+            self.node_names = [f'Node {i}' for i in range(nodes_output.shape[1])]
         else:
-            self.electrode_names = electrode_names
+            self.node_names = node_names
             
         # Initialize feature selector and variables
         self.feature_selector = FeatureSelector()
@@ -62,11 +62,11 @@ class BaseEvaluator:
         self.feature_selection_method = method
         self.num_features = num_features
         
-        # Use the FeatureSelector with electrode names
+        # Use the FeatureSelector with node names
         X_selected, selected_indices, selected_names = self.feature_selector.select_features(
             X=X, 
             y=y, 
-            electrode_names=self.electrode_names,
+            node_names=self.node_names,
             method=method, 
             num_features=num_features
         )

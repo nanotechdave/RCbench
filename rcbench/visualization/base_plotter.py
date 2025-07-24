@@ -20,7 +20,7 @@ class BasePlotter:
         
         try:
             # Use one of the available seaborn styles based on newer matplotlib versions
-            plt.style.use('seaborn-v0_8')
+            plt.style.use('default')  # Use default style to avoid legend conflicts
         except OSError:
             logger.warning("Seaborn style not available. Using default matplotlib style.")
             plt.style.use('default')
@@ -90,7 +90,12 @@ class BasePlotter:
         plt.xlabel(x_label)
         plt.ylabel(y_label)
         plt.title(title or 'True vs Predicted Values')
-        plt.legend()
+        legend = plt.legend()
+        legend.get_frame().set_visible(True)  # Force frame to be visible
+        legend.get_frame().set_facecolor('white')
+        legend.get_frame().set_edgecolor('black')
+        legend.get_frame().set_alpha(1.0)
+        legend.get_frame().set_linewidth(1.0)  # Set border width
         plt.grid(True)
         
         self._save_or_show(save_path)
@@ -221,7 +226,12 @@ class BasePlotter:
         plt.xlabel('Time')
         plt.ylabel('Output Response')
         plt.title(title or 'Node Responses')
-        plt.legend(loc='best')
+        legend = plt.legend(loc='best')
+        legend.get_frame().set_visible(True)  # Force frame to be visible
+        legend.get_frame().set_facecolor('white')
+        legend.get_frame().set_edgecolor('black')
+        legend.get_frame().set_alpha(1.0)
+        legend.get_frame().set_linewidth(1.0)  # Set border width
         plt.grid(True)
         
         self._save_or_show(save_path)
@@ -267,7 +277,12 @@ class BasePlotter:
         plt.xlabel('Input Amplitude')
         plt.ylabel('Output Response')
         plt.title(title or 'Input-Output Nonlinearity')
-        plt.legend(loc='best')
+        legend = plt.legend(loc='best')
+        legend.get_frame().set_visible(True)  # Force frame to be visible
+        legend.get_frame().set_facecolor('white')
+        legend.get_frame().set_edgecolor('black')
+        legend.get_frame().set_alpha(1.0)
+        legend.get_frame().set_linewidth(1.0)  # Set border width
         plt.grid(True)
         
         self._save_or_show(save_path)
@@ -324,7 +339,12 @@ class BasePlotter:
         plt.xlabel('Frequency (Hz)')
         plt.ylabel('Power Spectrum (log scale)')
         plt.title(title or 'Node Frequency Response Analysis')
-        plt.legend(loc='best')
+        legend = plt.legend(loc='best')
+        legend.get_frame().set_visible(True)  # Force frame to be visible
+        legend.get_frame().set_facecolor('white')
+        legend.get_frame().set_edgecolor('black')
+        legend.get_frame().set_alpha(1.0)
+        legend.get_frame().set_linewidth(1.0)  # Set border width
         plt.grid(True)
         
         self._save_or_show(save_path)
@@ -374,7 +394,12 @@ class BasePlotter:
         plt.xlabel('Frequency (Hz)')
         plt.ylabel('Power Spectrum')
         plt.title(title or 'Frequency Analysis')
-        plt.legend(loc='best')
+        legend = plt.legend(loc='best')
+        legend.get_frame().set_visible(True)  # Force frame to be visible
+        legend.get_frame().set_facecolor('white')
+        legend.get_frame().set_edgecolor('black')
+        legend.get_frame().set_alpha(1.0)
+        legend.get_frame().set_linewidth(1.0)  # Set border width
         plt.grid(True)
         
         self._save_or_show(save_path)

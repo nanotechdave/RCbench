@@ -4,76 +4,37 @@ import re
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Union
-from rcbench.measurements.parser import MeasurementParser
 from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
 
-class MeasurementType(Enum):
-    """Enumeration of possible measurement types."""
-    NLT = "nlt"
-    MEMORY_CAPACITY = "mc"
-    KERNEL_RANK = "kernel"
-    ACTIVATION = "activation"
-    UNKNOWN = "unknown"
-
 class ReservoirDataset:
     """
-    Main class for reservoir computing measurement data.
-    Handles loading, parsing, and accessing measurement data.
+    General parent class for reservoir computing measurement data.
+    Handles basic data loading, parsing, and accessing measurement data.
+    This class is designed to be general enough for any type of reservoir computing data.
     """
     def __init__(self, 
                 source: Union[str, pd.DataFrame, Path],
-                time_column: str = 'Time[s]',
-                ground_threshold: float = 1e-2,
-                input_nodes: Optional[List[str]] = None,
-                ground_nodes: Optional[List[str]] = None,
-                nodes: Optional[List[str]] = None):
+                time_column: str = 'Time[s]'):
         """
         Initialize a ReservoirDataset from a file or existing DataFrame.
         
         Args:
             source (Union[str, pd.DataFrame, Path]): Path to measurement file or DataFrame
             time_column (str): Name of the time column
-            ground_threshold (float): Threshold for identifying ground nodes
-            input_nodes (Optional[List[str]]): Force specific nodes as input
-            ground_nodes (Optional[List[str]]): Force specific nodes as ground
-            nodes (Optional[List[str]]): Force specific nodes as computation nodes
         """
         self.time_column = time_column
-        self.ground_threshold = ground_threshold
-        self.measurement_type = MeasurementType.UNKNOWN
-        self.forced_inputs = input_nodes
-        self.forced_grounds = ground_nodes
-        self.forced_nodes = nodes
         
         # Load data from file path or use provided DataFrame
         if isinstance(source, (str, Path)):
             self.file_path = str(source)
             self.dataframe = self._load_data_from_file(source)
-            self.measurement_type = self._determine_measurement_type(source)
         else:
             self.file_path = None
             self.dataframe = source
         
-        # Extract node columns for reference
-        self.voltage_columns = [col for col in self.dataframe.columns if col.endswith('_V[V]')]
-        self.current_columns = [col for col in self.dataframe.columns if col.endswith('_I[A]')]
-        
-        # Identify nodes using the parser
-        identified_nodes = MeasurementParser.identify_nodes(
-            self.dataframe, 
-            ground_threshold=self.ground_threshold,
-            forced_inputs=self.forced_inputs,
-            forced_grounds=self.forced_grounds
-        )
-        
-        # Store node information in this object
-        self.input_nodes = self.forced_inputs if self.forced_inputs is not None else identified_nodes['input_nodes']
-        self.ground_nodes = self.forced_grounds if self.forced_grounds is not None else identified_nodes['ground_nodes']
-        self.nodes = self.forced_nodes if self.forced_nodes is not None else identified_nodes['nodes']
-        
-        logger.info(f"Measurement type: {self.measurement_type.value if self.measurement_type else 'Unknown'}")
+        logger.info(f"Loaded dataset with shape: {self.dataframe.shape}")
     
     def _load_data_from_file(self, file_path: str) -> pd.DataFrame:
         """
@@ -103,6 +64,94 @@ class ReservoirDataset:
             logger.error(f"Error loading data from {file_path}: {str(e)}")
             raise
     
+    @property
+    def time(self) -> np.ndarray:
+        """Get time data as a numpy array."""
+        return self.dataframe[self.time_column].to_numpy()
+    
+    def summary(self) -> Dict:
+        """
+        Get a basic summary of the dataset.
+        
+        Returns:
+            Dict: Summary information
+        """
+        return {
+            'time_column': self.time_column,
+            'data_shape': self.dataframe.shape,
+            'columns': list(self.dataframe.columns)
+        }
+
+
+class MeasurementType(Enum):
+    """Enumeration of possible measurement types."""
+    NLT = "nlt"
+    MEMORY_CAPACITY = "mc"
+    KERNEL_RANK = "kernel"
+    ACTIVATION = "activation"
+    UNKNOWN = "unknown"
+
+
+class ElecResDataset(ReservoirDataset):
+    """
+    Child class for electrical reservoir computing measurement data.
+    Handles all electrical-specific functionality including node identification,
+    voltage/current parsing, and measurement type determination.
+    """
+    def __init__(self, 
+                source: Union[str, pd.DataFrame, Path],
+                time_column: str = 'Time[s]',
+                ground_threshold: float = 1e-2,
+                input_nodes: Optional[List[str]] = None,
+                ground_nodes: Optional[List[str]] = None,
+                nodes: Optional[List[str]] = None):
+        """
+        Initialize an ElecResDataset from a file or existing DataFrame.
+        
+        Args:
+            source (Union[str, pd.DataFrame, Path]): Path to measurement file or DataFrame
+            time_column (str): Name of the time column
+            ground_threshold (float): Threshold for identifying ground nodes
+            input_nodes (Optional[List[str]]): Force specific nodes as input
+            ground_nodes (Optional[List[str]]): Force specific nodes as ground
+            nodes (Optional[List[str]]): Force specific nodes as computation nodes
+        """
+        # Initialize parent class
+        super().__init__(source, time_column)
+        
+        # Electrical-specific initialization
+        self.ground_threshold = ground_threshold
+        self.measurement_type = MeasurementType.UNKNOWN
+        self.forced_inputs = input_nodes
+        self.forced_grounds = ground_nodes
+        self.forced_nodes = nodes
+        
+        # Determine measurement type if loaded from file
+        if self.file_path:
+            self.measurement_type = self._determine_measurement_type(self.file_path)
+        
+        # Extract electrical columns for reference
+        self.voltage_columns = [col for col in self.dataframe.columns if col.endswith('_V[V]')]
+        self.current_columns = [col for col in self.dataframe.columns if col.endswith('_I[A]')]
+        
+        # Import here to avoid circular imports
+        from rcbench.measurements.parser import MeasurementParser
+        
+        # Identify nodes using the parser
+        identified_nodes = MeasurementParser.identify_nodes(
+            self.dataframe, 
+            ground_threshold=self.ground_threshold,
+            forced_inputs=self.forced_inputs,
+            forced_grounds=self.forced_grounds
+        )
+        
+        # Store node information in this object
+        self.input_nodes = self.forced_inputs if self.forced_inputs is not None else identified_nodes['input_nodes']
+        self.ground_nodes = self.forced_grounds if self.forced_grounds is not None else identified_nodes['ground_nodes']
+        self.nodes = self.forced_nodes if self.forced_nodes is not None else identified_nodes['nodes']
+        
+        logger.info(f"Measurement type: {self.measurement_type.value if self.measurement_type else 'Unknown'}")
+    
     def _determine_measurement_type(self, file_path: str) -> MeasurementType:
         """
         Determine the type of measurement based on the filename.
@@ -127,11 +176,6 @@ class ReservoirDataset:
         elif "activation" in filename or "constant" in filename:
             return MeasurementType.ACTIVATION
         return MeasurementType.UNKNOWN
-    
-    @property
-    def time(self) -> np.ndarray:
-        """Get time data as a numpy array."""
-        return self.dataframe[self.time_column].to_numpy()
 
     @property
     def voltage(self) -> np.ndarray:
@@ -150,6 +194,7 @@ class ReservoirDataset:
         Returns:
             Dict[str, np.ndarray]: Dictionary mapping node names to voltage arrays
         """
+        from rcbench.measurements.parser import MeasurementParser
         return MeasurementParser.get_input_voltages(self.dataframe, self.input_nodes)
 
     def get_input_currents(self) -> Dict[str, np.ndarray]:
@@ -159,6 +204,7 @@ class ReservoirDataset:
         Returns:
             Dict[str, np.ndarray]: Dictionary mapping node names to current arrays
         """
+        from rcbench.measurements.parser import MeasurementParser
         return MeasurementParser.get_input_currents(self.dataframe, self.input_nodes)
 
     def get_ground_voltages(self) -> Dict[str, np.ndarray]:
@@ -168,6 +214,7 @@ class ReservoirDataset:
         Returns:
             Dict[str, np.ndarray]: Dictionary mapping node names to voltage arrays
         """
+        from rcbench.measurements.parser import MeasurementParser
         return MeasurementParser.get_ground_voltages(self.dataframe, self.ground_nodes)
 
     def get_ground_currents(self) -> Dict[str, np.ndarray]:
@@ -177,6 +224,7 @@ class ReservoirDataset:
         Returns:
             Dict[str, np.ndarray]: Dictionary mapping node names to current arrays
         """
+        from rcbench.measurements.parser import MeasurementParser
         return MeasurementParser.get_ground_currents(self.dataframe, self.ground_nodes)
 
     def get_node_voltages(self) -> np.ndarray:
@@ -186,6 +234,7 @@ class ReservoirDataset:
         Returns:
             np.ndarray: Matrix of node voltages [samples, nodes]
         """
+        from rcbench.measurements.parser import MeasurementParser
         return MeasurementParser.get_node_voltages(self.dataframe, self.nodes)
     
     def get_node_voltage(self, node: str) -> np.ndarray:
@@ -198,22 +247,23 @@ class ReservoirDataset:
         Returns:
             np.ndarray: Voltage data for the specified node
         """
+        from rcbench.measurements.parser import MeasurementParser
         return MeasurementParser.get_node_voltage(self.dataframe, node, self.nodes)
     
     def summary(self) -> Dict:
         """
-        Get a summary of the dataset including nodes.
+        Get a summary of the electrical dataset including nodes.
         
         Returns:
             Dict: Summary information
         """
-        return {
+        parent_summary = super().summary()
+        electrical_summary = {
             'measurement_type': self.measurement_type.value,
             'input_nodes': self.input_nodes,
             'ground_nodes': self.ground_nodes,
             'nodes': self.nodes,
-            'time_column': self.time_column,
             'voltage_columns': self.voltage_columns,
             'current_columns': self.current_columns,
-            'data_shape': self.dataframe.shape
         }
+        return {**parent_summary, **electrical_summary}

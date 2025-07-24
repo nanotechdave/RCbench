@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from rcbench.measurements.dataset import ReservoirDataset
+from rcbench import ElecResDataset
 from rcbench.tasks.memorycapacity import MemoryCapacityEvaluator
 from rcbench.visualization.plot_config import MCPlotConfig
 from rcbench.logger import get_logger
@@ -15,8 +15,8 @@ filenameMC = "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
 
 measurement_file_MC = BASE_DIR.parent / "tests" / "test_files" / filenameMC
 
-# Load the data directly using the ReservoirDataset class
-dataset = ReservoirDataset(measurement_file_MC)
+# Load the data directly using the ElecResDataset class
+dataset = ElecResDataset(measurement_file_MC)
 print(dataset.dataframe.head())
 # Get information about the nodes
 nodes_info = dataset.summary()

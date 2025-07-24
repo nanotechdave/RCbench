@@ -7,18 +7,18 @@ from rcbench.measurements.loader import MeasurementLoader
 from rcbench.measurements.parser import MeasurementParser
 from rcbench.tasks.memorycapacity import MemoryCapacityEvaluator
 from rcbench.tasks.featureselector import FeatureSelector
-from rcbench.measurements.dataset import ReservoirDataset
+from rcbench.measurements.dataset import ElecResDataset
 
 
 @pytest.fixture
 def reservoir_dataset():
-    """Load measurement data for testing using the ReservoirDataset class."""
+    """Load measurement data for testing using the ElecResDataset class."""
     BASE_DIR = Path(__file__).resolve().parent.parent
     filename = "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
     measurement_file = BASE_DIR / "tests" / "test_files" / filename
     
-    # Load the data directly using the ReservoirDataset class
-    dataset = ReservoirDataset(measurement_file)
+    # Load the data directly using the ElecResDataset class
+    dataset = ElecResDataset(measurement_file)
     return dataset
 
 
@@ -550,8 +550,8 @@ def test_all_nodes_data_consistency():
     print(f"Looking for test file at: {measurement_file}")
     print(f"File exists: {measurement_file.exists()}")
     
-    # Load the data directly using the ReservoirDataset class
-    dataset = ReservoirDataset(measurement_file)
+    # Load the data directly using the ElecResDataset class
+    dataset = ElecResDataset(measurement_file)
     
     # Get the raw dataframe directly from the dataset
     raw_df = dataset.dataframe

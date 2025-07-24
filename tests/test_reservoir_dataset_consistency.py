@@ -3,19 +3,19 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-from rcbench.measurements.dataset import ReservoirDataset
+from rcbench.measurements.dataset import ElecResDataset
 from rcbench.tasks.featureselector import FeatureSelector
 
 
 @pytest.fixture
 def reservoir_dataset():
-    """Load measurement data for testing using the ReservoirDataset class."""
+    """Load measurement data for testing using the ElecResDataset class."""
     BASE_DIR = Path(__file__).resolve().parent.parent
     filename = "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
     measurement_file = BASE_DIR / "tests" / "test_files" / filename
     
-    # Load the data directly using the ReservoirDataset class
-    dataset = ReservoirDataset(measurement_file)
+    # Load the data directly using the ElecResDataset class
+    dataset = ElecResDataset(measurement_file)
     return dataset
 
 

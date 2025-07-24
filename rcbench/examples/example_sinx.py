@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from rcbench.measurements.dataset import ReservoirDataset
+from rcbench import ElecResDataset  # Explicitly use electrical functionality
 from rcbench.tasks.sinx import SinxEvaluator
 from rcbench.logger import get_logger
 from rcbench.visualization.plot_config import SinxPlotConfig
@@ -15,8 +15,8 @@ filenameMC = "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
 
 measurement_file_MC = BASE_DIR.parent / "tests" / "test_files" / filenameMC
 
-# Load the data directly using the ReservoirDataset class
-dataset = ReservoirDataset(measurement_file_MC)
+# Load the data directly using the ElecResDataset class
+dataset = ElecResDataset(measurement_file_MC)
 
 # Get information about the nodes
 nodes_info = dataset.summary()
@@ -53,7 +53,7 @@ resultSinX = evaluatorSinX.run_evaluation(
     metric='NMSE',
     feature_selection_method='kbest',
     num_features='all',
-    model="Linear",
+    modeltype="Ridge",  # Changed from model to modeltype
     regression_alpha=0.1
 )
 

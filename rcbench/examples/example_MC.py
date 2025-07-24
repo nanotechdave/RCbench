@@ -18,20 +18,20 @@ measurement_file_MC = BASE_DIR.parent / "tests" / "test_files" / filenameMC
 # Load the data directly using the ReservoirDataset class
 dataset = ReservoirDataset(measurement_file_MC)
 print(dataset.dataframe.head())
-# Get information about the electrodes
-electrodes_info = dataset.summary()
-logger.info(f"Parsed Electrodes: {electrodes_info}")
+# Get information about the nodes
+nodes_info = dataset.summary()
+logger.info(f"Parsed Nodes: {nodes_info}")
 
 # Get input and node voltages directly from the dataset
 input_voltages = dataset.get_input_voltages()
 nodes_output = dataset.get_node_voltages()
 
-primary_input_electrode = electrodes_info['input_electrodes'][0]
-input_signal = input_voltages[primary_input_electrode]
+primary_input_node = nodes_info['input_nodes'][0]
+input_signal = input_voltages[primary_input_node]
 
-# Get electrode names from the dataset
-electrode_names = electrodes_info['node_electrodes']
-logger.info(f"Node electrodes: {electrode_names}")
+# Get node names from the dataset
+node_names = nodes_info['nodes']
+logger.info(f"Computation nodes: {node_names}")
 
 # Create MC plot configuration
 plot_config = MCPlotConfig(
@@ -59,7 +59,7 @@ evaluatorMC = MemoryCapacityEvaluator(
     input_signal, 
     nodes_output, 
     max_delay=30,
-    electrode_names=electrode_names,
+    node_names=node_names,
     plot_config=plot_config
 )
 

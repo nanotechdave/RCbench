@@ -26,26 +26,26 @@ class ReservoirDataset:
                 source: Union[str, pd.DataFrame, Path],
                 time_column: str = 'Time[s]',
                 ground_threshold: float = 1e-2,
-                input_electrodes: Optional[List[str]] = None,
-                ground_electrodes: Optional[List[str]] = None,
-                node_electrodes: Optional[List[str]] = None):
+                input_nodes: Optional[List[str]] = None,
+                ground_nodes: Optional[List[str]] = None,
+                nodes: Optional[List[str]] = None):
         """
         Initialize a ReservoirDataset from a file or existing DataFrame.
         
         Args:
             source (Union[str, pd.DataFrame, Path]): Path to measurement file or DataFrame
             time_column (str): Name of the time column
-            ground_threshold (float): Threshold for identifying ground electrodes
-            input_electrode (Optional[List[str]]): Force specific electrodes as input
-            ground_electrode (Optional[List[str]]): Force specific electrodes as ground
-            node_electrodes (Optional[List[str]]): Force specific electrodes as nodes
+            ground_threshold (float): Threshold for identifying ground nodes
+            input_nodes (Optional[List[str]]): Force specific nodes as input
+            ground_nodes (Optional[List[str]]): Force specific nodes as ground
+            nodes (Optional[List[str]]): Force specific nodes as computation nodes
         """
         self.time_column = time_column
         self.ground_threshold = ground_threshold
         self.measurement_type = MeasurementType.UNKNOWN
-        self.forced_inputs = input_electrodes
-        self.forced_grounds = ground_electrodes
-        self.forced_nodes = node_electrodes
+        self.forced_inputs = input_nodes
+        self.forced_grounds = ground_nodes
+        self.forced_nodes = nodes
         
         # Load data from file path or use provided DataFrame
         if isinstance(source, (str, Path)):
@@ -56,22 +56,22 @@ class ReservoirDataset:
             self.file_path = None
             self.dataframe = source
         
-        # Extract electrode columns for reference
+        # Extract node columns for reference
         self.voltage_columns = [col for col in self.dataframe.columns if col.endswith('_V[V]')]
         self.current_columns = [col for col in self.dataframe.columns if col.endswith('_I[A]')]
         
-        # Identify electrodes using the parser
-        identified_electrodes = MeasurementParser.identify_electrodes(
+        # Identify nodes using the parser
+        identified_nodes = MeasurementParser.identify_nodes(
             self.dataframe, 
             ground_threshold=self.ground_threshold,
             forced_inputs=self.forced_inputs,
             forced_grounds=self.forced_grounds
         )
         
-        # Store electrode information in this object
-        self.input_electrodes = self.forced_inputs if self.forced_inputs is not None else identified_electrodes['input_electrodes']
-        self.ground_electrodes = self.forced_grounds if self.forced_grounds is not None else identified_electrodes['ground_electrodes']
-        self.node_electrodes = self.forced_nodes if self.forced_nodes is not None else identified_electrodes['node_electrodes']
+        # Store node information in this object
+        self.input_nodes = self.forced_inputs if self.forced_inputs is not None else identified_nodes['input_nodes']
+        self.ground_nodes = self.forced_grounds if self.forced_grounds is not None else identified_nodes['ground_nodes']
+        self.nodes = self.forced_nodes if self.forced_nodes is not None else identified_nodes['nodes']
         
         logger.info(f"Measurement type: {self.measurement_type.value if self.measurement_type else 'Unknown'}")
     
@@ -145,73 +145,73 @@ class ReservoirDataset:
     
     def get_input_voltages(self) -> Dict[str, np.ndarray]:
         """
-        Get voltage data for all input electrodes.
+        Get voltage data for all input nodes.
         
         Returns:
-            Dict[str, np.ndarray]: Dictionary mapping electrode names to voltage arrays
+            Dict[str, np.ndarray]: Dictionary mapping node names to voltage arrays
         """
-        return MeasurementParser.get_input_voltages(self.dataframe, self.input_electrodes)
+        return MeasurementParser.get_input_voltages(self.dataframe, self.input_nodes)
 
     def get_input_currents(self) -> Dict[str, np.ndarray]:
         """
-        Get current data for all input electrodes.
+        Get current data for all input nodes.
         
         Returns:
-            Dict[str, np.ndarray]: Dictionary mapping electrode names to current arrays
+            Dict[str, np.ndarray]: Dictionary mapping node names to current arrays
         """
-        return MeasurementParser.get_input_currents(self.dataframe, self.input_electrodes)
+        return MeasurementParser.get_input_currents(self.dataframe, self.input_nodes)
 
     def get_ground_voltages(self) -> Dict[str, np.ndarray]:
         """
-        Get voltage data for all ground electrodes.
+        Get voltage data for all ground nodes.
         
         Returns:
-            Dict[str, np.ndarray]: Dictionary mapping electrode names to voltage arrays
+            Dict[str, np.ndarray]: Dictionary mapping node names to voltage arrays
         """
-        return MeasurementParser.get_ground_voltages(self.dataframe, self.ground_electrodes)
+        return MeasurementParser.get_ground_voltages(self.dataframe, self.ground_nodes)
 
     def get_ground_currents(self) -> Dict[str, np.ndarray]:
         """
-        Get current data for all ground electrodes.
+        Get current data for all ground nodes.
         
         Returns:
-            Dict[str, np.ndarray]: Dictionary mapping electrode names to current arrays
+            Dict[str, np.ndarray]: Dictionary mapping node names to current arrays
         """
-        return MeasurementParser.get_ground_currents(self.dataframe, self.ground_electrodes)
+        return MeasurementParser.get_ground_currents(self.dataframe, self.ground_nodes)
 
     def get_node_voltages(self) -> np.ndarray:
         """
-        Get voltage data for all node electrodes.
+        Get voltage data for all nodes.
         
         Returns:
-            np.ndarray: Matrix of node voltages [samples, electrodes]
+            np.ndarray: Matrix of node voltages [samples, nodes]
         """
-        return MeasurementParser.get_node_voltages(self.dataframe, self.node_electrodes)
+        return MeasurementParser.get_node_voltages(self.dataframe, self.nodes)
     
     def get_node_voltage(self, node: str) -> np.ndarray:
         """
-        Get voltage data for a specific node electrode.
+        Get voltage data for a specific node.
         
         Args:
-            node (str): Electrode name
+            node (str): Node name
             
         Returns:
             np.ndarray: Voltage data for the specified node
         """
-        return MeasurementParser.get_node_voltage(self.dataframe, node, self.node_electrodes)
+        return MeasurementParser.get_node_voltage(self.dataframe, node, self.nodes)
     
     def summary(self) -> Dict:
         """
-        Get a summary of the dataset including electrodes.
+        Get a summary of the dataset including nodes.
         
         Returns:
             Dict: Summary information
         """
         return {
             'measurement_type': self.measurement_type.value,
-            'input_electrodes': self.input_electrodes,
-            'ground_electrodes': self.ground_electrodes,
-            'node_electrodes': self.node_electrodes,
+            'input_nodes': self.input_nodes,
+            'ground_nodes': self.ground_nodes,
+            'nodes': self.nodes,
             'time_column': self.time_column,
             'voltage_columns': self.voltage_columns,
             'current_columns': self.current_columns,

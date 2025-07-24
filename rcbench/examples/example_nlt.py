@@ -20,18 +20,18 @@ measurement_file_NLT = BASE_DIR.parent / "tests" / "test_files" / filenameNLT
 # Load the data directly using the ReservoirDataset class
 dataset = ReservoirDataset(measurement_file_NLT)
 
-# Get information about the electrodes
-electrodes_info = dataset.summary()
-logger.info(f"Parsed Electrodes: {electrodes_info}")
+# Get information about the nodes
+nodes_info = dataset.summary()
+logger.info(f"Parsed Nodes: {nodes_info}")
 
 # Get input and node voltages directly from the dataset
-input_elec = electrodes_info['input_electrodes'][0]
-input_signal = dataset.get_input_voltages()[input_elec]
+input_node = nodes_info['input_nodes'][0]
+input_signal = dataset.get_input_voltages()[input_node]
 time = dataset.time
 
-# Get node voltages (only node electrodes, not input)
+# Get node voltages (only computation nodes, not input)
 nodes_output = dataset.get_node_voltages()
-electrode_names = electrodes_info['node_electrodes']
+node_names = nodes_info['nodes']
 
 # Create NLT plot configuration
 plot_config = NLTPlotConfig(
@@ -57,7 +57,7 @@ evaluatorNLT = NltEvaluator(
     nodes_output=nodes_output,
     time_array=time,
     waveform_type='sine',  # or 'triangular'
-    electrode_names=electrode_names,
+    node_names=node_names,
     plot_config=plot_config
 )
 
@@ -81,7 +81,7 @@ for target_name in evaluatorNLT.targets:
         logger.output(f"NLT Analysis for Target: '{target_name}'")
         logger.output(f"  - Metric: {result['metric']}")
         logger.output(f"  - Accuracy: {result['accuracy']:.5f}")
-        logger.output(f"  - Selected Features Indices: {[electrode_names[i] for i in result['selected_features']]}")
+        logger.output(f"  - Selected Features Indices: {[node_names[i] for i in result['selected_features']]}")
         logger.output(f"  - Model Weights: {result['model'].coef_}\n")
     except Exception as e:
         logger.error(f"Error evaluating {target_name}: {str(e)}")

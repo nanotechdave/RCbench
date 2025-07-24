@@ -34,7 +34,7 @@ class FeatureSelector:
     def select_features(self, 
                        X: np.ndarray, 
                        y: np.ndarray, 
-                       electrode_names: List[str],
+                       node_names: List[str],
                        method: str = 'pca', 
                        num_features: Union[int, str] = 'all') -> Tuple[np.ndarray, List[int], List[str]]:
         """
@@ -43,7 +43,7 @@ class FeatureSelector:
         Args:
             X (np.ndarray): Input features.
             y (np.ndarray): Target values.
-            electrode_names (List[str]): List of electrode names.
+            node_names (List[str]): List of node names.
             method (str): Feature selection method ('pca' or 'kbest').
             num_features (Union[int, str]): Number of features to select or 'all'.
             
@@ -57,16 +57,16 @@ class FeatureSelector:
         np.random.seed(self.random_state)
         
         if method == 'kbest':
-            return self._select_kbest(X, y, electrode_names, num_features)
+            return self._select_kbest(X, y, node_names, num_features)
         elif method == 'pca':
-            return self._select_pca(X, electrode_names, num_features)
+            return self._select_pca(X, node_names, num_features)
         else:
             raise ValueError(f"Unsupported method: {method}. Choose 'kbest' or 'pca'")
     
     def _select_kbest(self, 
                      X: np.ndarray, 
                      y: np.ndarray,
-                     electrode_names: List[str],
+                     node_names: List[str],
                      num_features: Union[int, str]) -> Tuple[np.ndarray, List[int], List[str]]:
         """
         Select features using SelectKBest.
@@ -74,7 +74,7 @@ class FeatureSelector:
         Args:
             X (np.ndarray): Input features.
             y (np.ndarray): Target values.
-            electrode_names (List[str]): List of electrode names.
+            node_names (List[str]): List of node names.
             num_features (Union[int, str]): Number of features to select or 'all'.
             
         Returns:
@@ -86,26 +86,26 @@ class FeatureSelector:
         
         # Store the results
         self.selected_features = selected_indices
-        self.selected_feature_names = [electrode_names[i] for i in selected_indices]
+        self.selected_feature_names = [node_names[i] for i in selected_indices]
         
         # Create feature importance series
         self.feature_importance = pd.Series(
             selector.scores_, 
-            index=electrode_names
+            index=node_names
         )
         
         return X_selected, selected_indices, self.selected_feature_names
     
     def _select_pca(self, 
                    X: np.ndarray, 
-                   electrode_names: List[str],
+                   node_names: List[str],
                    num_features: Union[int, str]) -> Tuple[np.ndarray, List[int], List[str]]:
         """
         Select features using PCA based on first component loadings.
         
         Args:
             X (np.ndarray): Input features.
-            electrode_names (List[str]): List of electrode names.
+            node_names (List[str]): List of node names.
             num_features (Union[int, str]): Number of features to select or 'all'.
             
         Returns:
@@ -115,11 +115,11 @@ class FeatureSelector:
         if num_features == 'all':
             num_features = X.shape[1]
         
-        # Log electrode names
-        logger.debug(f"PCA feature selection with electrodes: {electrode_names}")
+        # Log node names
+        logger.debug(f"PCA feature selection with nodes: {node_names}")
         
-        # Create DataFrame with electrode names as columns
-        X_df = pd.DataFrame(X, columns=electrode_names)
+        # Create DataFrame with node names as columns
+        X_df = pd.DataFrame(X, columns=node_names)
         
         # Initialize preprocessing pipeline with fixed random state
         self.imputer = SimpleImputer(strategy='mean')
@@ -144,9 +144,9 @@ class FeatureSelector:
         
         # Create a DataFrame to help with stable sorting
         importance_df = pd.DataFrame({
-            'electrode': electrode_names,
+            'node': node_names,
             'importance': loadings,
-            'index': range(len(electrode_names))
+            'index': range(len(node_names))
         })
         
         # Sort by importance (descending), then by index for stability
@@ -157,13 +157,13 @@ class FeatureSelector:
         
         # Extract selected indices and names
         self.selected_features = top_features['index'].astype(int).tolist()
-        self.selected_feature_names = top_features['electrode'].tolist()
+        self.selected_feature_names = top_features['node'].tolist()
         
         # Create feature importance Series
-        self.feature_importance = pd.Series(loadings, index=electrode_names)
+        self.feature_importance = pd.Series(loadings, index=node_names)
         
-        # Log selected electrodes
-        logger.info(f"Selected electrodes using PCA: {self.selected_feature_names}")
+        # Log selected nodes
+        logger.info(f"Selected nodes using PCA: {self.selected_feature_names}")
         
         # Return selected features
         X_selected = X[:, self.selected_features]
@@ -189,7 +189,7 @@ class FeatureSelector:
         Get feature importance scores.
         
         Returns:
-            pd.Series: Feature importance scores indexed by electrode names.
+            pd.Series: Feature importance scores indexed by node names.
         """
         if self.feature_importance is None:
             raise ValueError("Feature selection has not been performed yet. Call select_features first.")

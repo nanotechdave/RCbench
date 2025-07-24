@@ -18,19 +18,19 @@ measurement_file_MC = BASE_DIR.parent / "tests" / "test_files" / filenameMC
 # Load the data directly using the ReservoirDataset class
 dataset = ReservoirDataset(measurement_file_MC)
 
-# Get information about the electrodes
-electrodes_info = dataset.summary()
-logger.info(f"Parsed Electrodes: {electrodes_info}")
+# Get information about the nodes
+nodes_info = dataset.summary()
+logger.info(f"Parsed Nodes: {nodes_info}")
 
 # Get input and node voltages directly from the dataset
 input_voltages = dataset.get_input_voltages()
 nodes_output = dataset.get_node_voltages()
 
-primary_input_electrode = electrodes_info['input_electrodes'][0]
-input_signal = input_voltages[primary_input_electrode]
+primary_input_node = nodes_info['input_nodes'][0]
+input_signal = input_voltages[primary_input_node]
 
-# Create list of electrode names for the node electrodes
-electrode_names = electrodes_info['node_electrodes']
+# Create list of node names for the computation nodes
+node_names = nodes_info['nodes']
 
 # Create plot configuration with all plots enabled
 plot_config = NarmaPlotConfig(
@@ -44,7 +44,7 @@ plot_config = NarmaPlotConfig(
 
 evaluatorNARMA = NarmaEvaluator(input_signal, 
                                nodes_output, 
-                               electrode_names=electrode_names,  # Pass electrode names
+                               node_names=node_names,  # Pass node names
                                order=2, 
                                alpha=0.4, 
                                beta=0.4, 

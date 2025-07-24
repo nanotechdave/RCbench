@@ -81,17 +81,3 @@ class GeneralizationRankEvaluator(BaseEvaluator):
             'threshold': self.threshold
         }
 
-
-    # Example usage:
-    # Suppose we have m = 50 distinct (noisy) input streams, and each reservoir state vector is n = 100 dimensional.
-    #m = 50
-    #n = 100
-    # For demonstration, generate random reservoir states.
-    # In practice, these states should be the outputs of the reservoir given noisy versions of a single input.
-    # Here, we generate an (m, n) array (each row is a state vector) which will be transposed to M (n, m).
-    #states = np.random.randn(m, n)
-    #evaluator = GeneralizationRankEvaluator(states, threshold=1e-3)
-    #results = evaluator.run_evaluation()
-    #print("Generalization Rank:", results['generalization_rank'])
-    #print("Singular Values:", results['singular_values'])
-    #print("Matrix M shape:", results['M_shape'])

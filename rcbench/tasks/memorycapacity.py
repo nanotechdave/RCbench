@@ -19,7 +19,7 @@ class MemoryCapacityEvaluator(BaseEvaluator):
                  nodes_output: np.ndarray, 
                  max_delay: int = 30,
                  random_state: int = 42,
-                 electrode_names: Optional[List[str]] = None,
+                 node_names: Optional[List[str]] = None,
                  plot_config: Optional[MCPlotConfig] = None) -> None:
         """
         Initializes the Memory Capacity evaluator.
@@ -29,10 +29,10 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         - nodes_output (np.ndarray): Reservoir node output (features).
         - max_delay (int): Maximum delay steps to evaluate.
         - random_state (int): Random seed for reproducibility.
-        - electrode_names (Optional[List[str]]): Names of electrodes for plotting.
+                    - node_names (Optional[List[str]]): Names of nodes for plotting.
         - plot_config (Optional[MCPlotConfig]): Configuration for plotting.
         """
-        super().__init__(input_signal, nodes_output, electrode_names)
+        super().__init__(input_signal, nodes_output, node_names)
         self.max_delay: int = max_delay
         self.random_state = random_state
         self.targets = self.target_generator()
@@ -43,11 +43,11 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         self.evaluation_results = None
         self.mc_matrix = None
         
-        # Store electrode names if provided, otherwise create default ones
-        if electrode_names is None:
-            self.electrode_names = [f'Electrode {i}' for i in range(nodes_output.shape[1])]
+        # Store node names if provided, otherwise create default ones
+        if node_names is None:
+            self.node_names = [f'Node {i}' for i in range(nodes_output.shape[1])]
         else:
-            self.electrode_names = electrode_names
+            self.node_names = node_names
 
     def evaluate_mc(self, y_true, y_pred):
         """
@@ -253,7 +253,7 @@ class MemoryCapacityEvaluator(BaseEvaluator):
         # First generate the general reservoir property plots
         # Create node outputs dictionary for visualization
         node_outputs = {}
-        for i, name in enumerate(self.electrode_names):
+        for i, name in enumerate(self.node_names):
             node_outputs[name] = self.nodes_output[:, i]
         
         # Plot general reservoir properties if enabled

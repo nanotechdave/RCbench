@@ -19,7 +19,7 @@ def run_memory_capacity():
     parser = MeasurementParser(dataset)
     
     # Extract necessary signals
-    input_signal = parser.get_input_voltages()[parser.input_electrodes[0]]
+    input_signal = parser.get_input_voltages()[parser.input_nodes[0]]
     nodes_output = parser.get_node_voltages()
     
     # Initialize the Memory Capacity evaluator

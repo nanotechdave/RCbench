@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Optional
-from rcbench.measurements.dataset import ReservoirDataset
+from rcbench.measurements.dataset import ElecResDataset
 from rcbench.measurements.parser import MeasurementParser
 from rcbench.logger import get_logger
 
@@ -25,7 +25,7 @@ class Measurement():
         """
         self.path = path
         self.type = self._determine_measurement_type()
-        self.dataset: Optional[ReservoirDataset] = None
+        self.dataset: Optional[ElecResDataset] = None
         self.parser: Optional[MeasurementParser] = None
         self._load_measurement()
     

@@ -76,6 +76,7 @@ resultsMC = evaluatorMC.calculate_total_memory_capacity(
 evaluatorMC.plot_results()
 
 logger.output(f"Total Memory Capacity: {resultsMC['total_memory_capacity']:.4f}\n")
+logger.info(f"keys: {resultsMC.keys()}")
 
     
 

@@ -129,19 +129,15 @@ class NltEvaluator(BaseEvaluator):
         signal_squared = signal**2
         targets['double_frequency'] = signal_squared - np.mean(signal_squared)
 
-        # 4. Triangle from sine: Use integration approach
+        # 4. Triangle from sine: Use proper triangular wave generation
         if self.waveform_type == 'sine':
-            # For a sine wave, the integral gives us a cosine (shifted by π/2)
-            # Then we can create a triangular approximation
-            dt = np.mean(np.diff(self.time)) if len(self.time) > 1 else 1.0
-            integrated = np.cumsum(signal) * dt
-            # Normalize and create triangular wave pattern
-            integrated = integrated - np.mean(integrated)
-            integrated /= np.max(np.abs(integrated))
-            # Create triangular wave by using the sawtooth function with the integrated signal
-            # Map the integrated signal to phase-like values
-            phase_approx = np.pi * integrated  # Scale to reasonable phase range
-            targets['triangular_wave'] = sawtooth(phase_approx, width=0.5)
+            # Method 1: Use the Hilbert transform to get instantaneous phase
+            analytic_signal = hilbert(signal)
+            instantaneous_phase = np.angle(analytic_signal)
+            # Unwrap phase to make it continuous
+            instantaneous_phase = np.unwrap(instantaneous_phase)
+            # Generate triangular wave using sawtooth with width=0.5 (symmetric triangle)
+            targets['triangular_wave'] = sawtooth(instantaneous_phase, width=0.5)
 
         # 5. Sine from triangle
         if self.waveform_type == 'triangular':

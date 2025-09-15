@@ -34,4 +34,5 @@ rcbench/visualization/nlt_plotter.py
 rcbench/visualization/plot_config.py
 rcbench/visualization/sinx_plotter.py
 tests/test_electrode_selection.py
+tests/test_nlt_dataset.py
 tests/test_reservoir_dataset_consistency.py

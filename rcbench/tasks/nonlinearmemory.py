@@ -163,10 +163,12 @@ class NonlinearMemoryEvaluator(BaseEvaluator):
     def run_evaluation(self,
                       tau: int,
                       nu: float,
+                      metric: str = 'NMSE',
+                      feature_selection_method: str = 'kbest',
+                      num_features: Union[int, str] = 'all',
                       modeltype: str = "Ridge",
                       regression_alpha: float = 1.0,
-                      train_ratio: float = 0.8,
-                      metric: str = 'NMSE') -> Dict[str, Any]:
+                      train_ratio: float = 0.8) -> Dict[str, Any]:
         """
         Run evaluation for a specific (τ, ν) parameter combination.
         
@@ -176,14 +178,18 @@ class NonlinearMemoryEvaluator(BaseEvaluator):
             Delay parameter (memory depth)
         nu : float
             Nonlinearity strength parameter
+        metric : str
+            Metric to evaluate ('NMSE', 'RNMSE', 'MSE', or 'Capacity')
+        feature_selection_method : str
+            Method for feature selection ('kbest', 'pca', 'none')
+        num_features : int or str
+            Number of features to use, or 'all'
         modeltype : str
             Type of regression model ('Ridge' or 'Linear')
         regression_alpha : float
             Regularization parameter for Ridge regression
         train_ratio : float
             Ratio of data to use for training
-        metric : str
-            Metric to evaluate ('NMSE', 'RNMSE', 'MSE', or 'Capacity')
         
         Returns:
         --------
@@ -204,14 +210,24 @@ class NonlinearMemoryEvaluator(BaseEvaluator):
         X = self.nodes_output[start_idx:start_idx + data_length]
         y = target[start_idx:start_idx + data_length]
         
-        # Split into train/test
-        split_idx = int(train_ratio * data_length)
-        X_train, X_test = X[:split_idx], X[split_idx:]
-        y_train, y_test = y[:split_idx], y[split_idx:]
+        # Split into train/test using BaseEvaluator method
+        X_train, X_test, y_train, y_test = self.split_train_test(X, y, train_ratio)
         
-        # Apply feature selection if configured
-        X_train_selected = self.apply_feature_selection(X_train)
-        X_test_selected = self.apply_feature_selection(X_test)
+        # Feature selection using BaseEvaluator method
+        # Only perform feature selection if not already done (e.g., in parameter sweep)
+        if self.selected_features is None:
+            X_train_selected, selected_features, _ = self.feature_selection(
+                X_train, y_train, feature_selection_method, num_features
+            )
+            if feature_selection_method == 'kbest':
+                X_test_selected = X_test[:, selected_features]
+            else:
+                X_test_selected = self.apply_feature_selection(X_test)
+        else:
+            # Use already selected features
+            X_train_selected = self.apply_feature_selection(X_train)
+            X_test_selected = self.apply_feature_selection(X_test)
+            selected_features = self.selected_features
         
         # Train regression model
         if modeltype.lower() == "ridge":
@@ -236,6 +252,7 @@ class NonlinearMemoryEvaluator(BaseEvaluator):
             'error': error,
             'capacity': capacity,
             'metric': metric,
+            'selected_features': selected_features,
             'model': model,
             'y_pred': y_pred,
             'y_test': y_test,
@@ -329,17 +346,19 @@ class NonlinearMemoryEvaluator(BaseEvaluator):
                     result = self.run_evaluation(
                         tau=tau,
                         nu=nu,
+                        metric=metric,
+                        feature_selection_method=feature_selection_method,
+                        num_features=num_features,
                         modeltype=modeltype,
                         regression_alpha=regression_alpha,
-                        train_ratio=train_ratio,
-                        metric=metric
+                        train_ratio=train_ratio
                     )
                     
                     results[(tau, nu)] = result
                     capacity_matrix[i, j] = result['capacity']
                     error_matrix[i, j] = result['error']
                     
-                    logger.info(f"  → Error: {result['error']:.6f}, Capacity: {result['capacity']:.6f}")
+                    logger.info(f"  → {metric}: {result['error']:.6f}, Capacity: {result['capacity']:.6f}")
                     
                 except Exception as e:
                     logger.error(f"Error evaluating (τ={tau}, ν={nu}): {str(e)}")

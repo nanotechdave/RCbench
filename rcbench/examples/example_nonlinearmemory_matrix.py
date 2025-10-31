@@ -207,7 +207,7 @@ def main():
         modeltype='Ridge',
         regression_alpha=0.1,
         train_ratio=0.8,
-        metric='NMSE'
+        metric='NMSE'  # Options: 'NMSE', 'RNMSE', 'MSE'
     )
     
     logger.info("\nParameter sweep completed!\n")
@@ -347,15 +347,106 @@ def main():
     # ====================================================================
     
     logger.output("\n" + "="*60)
-    logger.output("EXPERIMENT SUGGESTION")
+    logger.output("EXPERIMENT SUGGESTIONS")
     logger.output("="*60)
-    logger.output("\nTo explore different trade-offs, try changing 'reservoir_type':")
+    
+    logger.output("\n1. Try different reservoir types:")
     logger.output("  - reservoir_type='linear'    → Strong memory, weak nonlinearity")
     logger.output("  - reservoir_type='nonlinear' → Weak memory, strong nonlinearity")
     logger.output("  - reservoir_type='balanced'  → Balanced (edge-of-chaos)")
+    
+    logger.output("\n2. Try different metrics:")
+    logger.output("  - metric='NMSE'   → Normalized Mean Squared Error (default)")
+    logger.output("  - metric='RNMSE'  → Root Normalized Mean Squared Error")
+    logger.output("  - metric='MSE'    → Mean Squared Error")
+    
+    logger.output("\n3. Test individual (τ, ν) combinations:")
+    logger.output("  Use evaluator.run_evaluation(tau=X, nu=Y, metric='NMSE', ...)")
+    
     logger.output("\nObserve how the capacity matrix C(τ, ν) changes!")
     
     return evaluator, results
+
+
+def compare_metrics():
+    """
+    Optional: Compare different evaluation metrics.
+    Shows how NMSE, RNMSE, and MSE relate to each other.
+    """
+    logger.info("\n" + "="*60)
+    logger.info("COMPARING EVALUATION METRICS")
+    logger.info("="*60 + "\n")
+    
+    # Generate data
+    n_samples = 2000
+    np.random.seed(42)
+    input_signal = np.random.uniform(-1, 1, n_samples)
+    
+    # Create balanced reservoir
+    n_nodes = 15
+    nodes_output = np.zeros((n_samples, n_nodes))
+    
+    for i in range(n_nodes):
+        delay = np.random.randint(0, 8)
+        decay = np.random.uniform(0.6, 0.8)
+        gain = 0.5 + 0.8 * np.random.random()
+        nonlin_strength = np.random.uniform(0.5, 1.2)
+        
+        node_signal = np.zeros(n_samples)
+        for t in range(delay, n_samples):
+            current_input = gain * input_signal[t - delay]
+            if t > 0:
+                node_signal[t] = current_input + decay * node_signal[t-1]
+            else:
+                node_signal[t] = current_input
+            node_signal[t] = np.tanh(nonlin_strength * node_signal[t])
+        
+        node_signal += 0.05 * np.random.normal(0, 1, n_samples)
+        nodes_output[:, i] = node_signal
+    
+    # Test different metrics
+    metrics = ['NMSE', 'RNMSE', 'MSE']
+    metric_results = {}
+    
+    for metric in metrics:
+        logger.info(f"Evaluating with {metric}...")
+        
+        evaluator = NonlinearMemoryEvaluator(
+            input_signal=input_signal,
+            nodes_output=nodes_output,
+            tau_values=[1, 2, 3, 4, 5],
+            nu_values=[0.1, 1.0, 10.0],
+            random_state=42
+        )
+        
+        results = evaluator.run_parameter_sweep(
+            feature_selection_method='kbest',
+            num_features='all',
+            modeltype='Ridge',
+            regression_alpha=0.1,
+            train_ratio=0.8,
+            metric=metric
+        )
+        
+        metric_results[metric] = {
+            'avg_capacity': np.nanmean(results['capacity_matrix']),
+            'avg_error': np.nanmean(results['error_matrix']),
+            'best_capacity': np.nanmax(results['capacity_matrix'])
+        }
+    
+    # Display comparison
+    logger.output("\n" + "="*60)
+    logger.output("METRIC COMPARISON RESULTS")
+    logger.output("="*60)
+    
+    for metric in metrics:
+        logger.output(f"\n{metric}:")
+        logger.output(f"  Average capacity: {metric_results[metric]['avg_capacity']:.4f}")
+        logger.output(f"  Average {metric}: {metric_results[metric]['avg_error']:.6f}")
+        logger.output(f"  Best capacity: {metric_results[metric]['best_capacity']:.4f}")
+    
+    logger.output("\nNote: Capacity values should be similar across metrics")
+    logger.output("      (since Capacity = 1 - NMSE regardless of error metric)")
 
 
 def compare_reservoir_types():
@@ -417,6 +508,9 @@ def compare_reservoir_types():
 if __name__ == "__main__":
     # Run main benchmark
     evaluator, results = main()
+    
+    # Uncomment to compare different evaluation metrics
+    # compare_metrics()
     
     # Uncomment to compare different reservoir types
     # compare_reservoir_types()

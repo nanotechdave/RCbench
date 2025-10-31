@@ -26,51 +26,51 @@ def main():
     
     # Option 1: Load data from a measurement file
     BASE_DIR = Path(__file__).resolve().parent.parent
-    measurement_file = BASE_DIR.parent / "tests" / "test_files" / "dataset_test.csv"
+    measurement_file = BASE_DIR.parent / "tests" / "test_files" / "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
     
-    if measurement_file.exists():
-        logger.info(f"Loading data from: {measurement_file}")
-        dataset = ElecResDataset(measurement_file)
-        
-        # Get input and node voltages
-        input_voltages = dataset.get_input_voltages()
-        nodes_output = dataset.get_node_voltages()
-        node_names = dataset.nodes
-        
-        # Use first input node
-        primary_input = dataset.input_nodes[0]
-        input_signal = input_voltages[primary_input]
-        
-        logger.info(f"Loaded dataset:")
-        logger.info(f"  Input node: {primary_input}")
-        logger.info(f"  Input signal shape: {input_signal.shape}")
-        logger.info(f"  Nodes output shape: {nodes_output.shape}")
-        logger.info(f"  Number of nodes: {len(node_names)}\n")
     
-    else:
-        # Option 2: Generate synthetic data for demonstration
-        logger.info("Generating synthetic data for demonstration\n")
-        
-        n_samples = 2000
-        n_nodes = 20
-        
-        # Generate random input signal
-        np.random.seed(42)
-        input_signal = np.random.uniform(-1, 1, n_samples)
-        
-        # Generate synthetic reservoir responses (simple nonlinear transformations)
-        nodes_output = np.zeros((n_samples, n_nodes))
-        for i in range(n_nodes):
-            delay = np.random.randint(1, 5)
-            nonlinearity = 0.5 + np.random.rand() * 2
-            nodes_output[:, i] = np.tanh(nonlinearity * np.roll(input_signal, delay))
-            nodes_output[:, i] += np.random.randn(n_samples) * 0.05  # Add noise
-        
-        node_names = [f'Node_{i}' for i in range(n_nodes)]
-        
-        logger.info(f"Generated synthetic data:")
-        logger.info(f"  Input signal shape: {input_signal.shape}")
-        logger.info(f"  Nodes output shape: {nodes_output.shape}\n")
+    logger.info(f"Loading data from: {measurement_file}")
+    dataset = ElecResDataset(measurement_file)
+    
+    # Get input and node voltages
+    input_voltages = dataset.get_input_voltages()
+    nodes_output = dataset.get_node_voltages()
+    node_names = dataset.nodes
+    
+    # Use first input node
+    primary_input = dataset.input_nodes[0]
+    input_signal = input_voltages[primary_input]
+    
+    logger.info(f"Loaded dataset:")
+    logger.info(f"  Input node: {primary_input}")
+    logger.info(f"  Input signal shape: {input_signal.shape}")
+    logger.info(f"  Nodes output shape: {nodes_output.shape}")
+    logger.info(f"  Number of nodes: {len(node_names)}\n")
+
+
+    # Option 2: Generate synthetic data for demonstration
+    logger.info("Generating synthetic data for demonstration\n")
+    
+    n_samples = 2000
+    n_nodes = 20
+    
+    # Generate random input signal
+    np.random.seed(42)
+    input_signal = np.random.uniform(-1, 1, n_samples)
+    
+    # Generate synthetic reservoir responses (simple nonlinear transformations)
+    nodes_output = np.zeros((n_samples, n_nodes))
+    for i in range(n_nodes):
+        delay = np.random.randint(1, 5)
+        nonlinearity = 0.5 + np.random.rand() * 2
+        nodes_output[:, i] = np.tanh(nonlinearity * np.roll(input_signal, delay))
+        nodes_output[:, i] += np.random.randn(n_samples) * 0.05  # Add noise
+    
+    node_names = [f'Node_{i}' for i in range(n_nodes)]
+    
+    logger.info(f"Generated synthetic data:")
+    logger.info(f"  Input signal shape: {input_signal.shape}")
+    logger.info(f"  Nodes output shape: {nodes_output.shape}\n")
     
     # Define parameter ranges for the benchmark
     tau_values = [1, 2, 3, 4, 5, 6, 7, 8]  # Delay values (memory depth)

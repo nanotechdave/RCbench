@@ -111,7 +111,7 @@ RCbench/
 
 ## 🔧 Installation
 
-### Install from PyPI (coming soon):
+### Install from PyPI:
 
 ```bash
 pip install rcbench

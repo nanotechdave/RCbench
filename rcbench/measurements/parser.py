@@ -80,22 +80,32 @@ class MeasurementParser:
         ground_nodes = []
 
         for current_col in current_cols:
-            node = current_col.split('_')[0]
-            voltage_col = f"{node}_V[V]"
+            # Extract node name from current column (remove "_I[A]" suffix)
+            if current_col.endswith('_I[A]'):
+                node = current_col[:-5]  # Remove "_I[A]" suffix
+                voltage_col = f"{node}_V[V]"
 
-            if voltage_col in voltage_cols:
-                voltage_data = dataframe[voltage_col].values
+                if voltage_col in voltage_cols:
+                    voltage_data = dataframe[voltage_col].values
 
-                # Check if the voltage is close to 0 (low std & low mean)
-                is_ground = (
-                    np.nanstd(voltage_data) < ground_threshold and
-                    np.abs(np.nanmean(voltage_data)) < ground_threshold
-                )
+                    # Skip if all values are NaN (these columns should have been dropped already)
+                    if np.all(np.isnan(voltage_data)):
+                        logger.info(f"Skipping node {node} - all voltage values are NaN")
+                        continue
 
-                if is_ground:
-                    ground_nodes.append(node)
-                else:
-                    input_nodes.append(node)
+                    # Check if the voltage is close to 0 (low std & low mean) - indicates ground
+                    is_ground = (
+                        np.nanstd(voltage_data) < ground_threshold and
+                        np.abs(np.nanmean(voltage_data)) < ground_threshold
+                    )
+
+                    # Simple classification based on voltage characteristics:
+                    # - If voltage is consistently near zero -> ground node
+                    # - Otherwise -> input node (nodes that drive the system)
+                    if is_ground:
+                        ground_nodes.append(node)
+                    else:
+                        input_nodes.append(node)
 
         if not input_nodes:
             logger.warning("No input nodes found.")
@@ -122,14 +132,16 @@ class MeasurementParser:
         nodes = []
 
         for col in voltage_cols:
-            match = re.match(r"^(\d+)_V\[V\]$", col)
-            if match:
-                node = match.group(1)
+            # Extract node name from voltage column (remove "_V[V]" suffix)
+            if col.endswith('_V[V]'):
+                node = col[:-5]  # Remove "_V[V]" suffix
+                
+                # If this node is not in the input or ground nodes, it's a computation node
                 if node not in exclude:
                     nodes.append(node)
 
-        # Sort numerically by converting to int, then back to string
-        return sorted(list(set(nodes)), key=lambda x: int(x))
+        # Sort nodes alphabetically (since names can be arbitrary)
+        return sorted(list(set(nodes)))
 
     @staticmethod
     def get_input_voltages(dataframe: pd.DataFrame, input_nodes: List[str]) -> Dict[str, np.ndarray]:

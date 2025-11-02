@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 
-with open("README.md", "r") as f:
+with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
     name="rcbench",
-    version="0.1.10",
+    version="0.1.20",
     description="Reservoir computing benchmark toolkit",
     #package_dir={"":"rcbench"},
     packages=find_packages(),

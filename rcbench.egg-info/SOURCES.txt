@@ -23,6 +23,7 @@ rcbench/tasks/kernelrank.py
 rcbench/tasks/memorycapacity.py
 rcbench/tasks/narma.py
 rcbench/tasks/nlt.py
+rcbench/tasks/nonlinearmemory.py
 rcbench/tasks/sinx.py
 rcbench/utils/__init__.py
 rcbench/utils/utils.py

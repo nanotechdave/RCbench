@@ -23,6 +23,7 @@ rcbench/tasks/kernelrank.py
 rcbench/tasks/memorycapacity.py
 rcbench/tasks/narma.py
 rcbench/tasks/nlt.py
+rcbench/tasks/nonlinearmemory.py
 rcbench/tasks/sinx.py
 rcbench/utils/__init__.py
 rcbench/utils/utils.py
@@ -34,4 +35,5 @@ rcbench/visualization/nlt_plotter.py
 rcbench/visualization/plot_config.py
 rcbench/visualization/sinx_plotter.py
 tests/test_electrode_selection.py
+tests/test_nlt_dataset.py
 tests/test_reservoir_dataset_consistency.py

@@ -13,7 +13,7 @@ logger.setLevel(logging.INFO) #use 25 for output only, use logging.INFO for outp
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-filenameNLT = "837_INRiMJanis_NWN_Pad99C_grid_SE_Custom Wave Measurement_2024_02_01.txt"
+filenameNLT = "034_INRiMPXIe_NWN_Pad285T_SO_IVMeasurement_2025_09_05.txt"
 
 measurement_file_NLT = BASE_DIR.parent / "tests" / "test_files" / filenameNLT
 

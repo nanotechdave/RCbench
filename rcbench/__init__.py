@@ -1,4 +1,4 @@
-__version__ = "0.1.10"
+__version__ = "0.1.20"
 
 from .utils import utils
 from .tasks.nlt import NltEvaluator
@@ -7,6 +7,7 @@ from .tasks.sinx import SinxEvaluator
 from .tasks.kernelrank import KernelRankEvaluator
 from .tasks.generalizationrank import GeneralizationRankEvaluator
 from .tasks.narma import NarmaEvaluator
+from .tasks.nonlinearmemory import NonlinearMemoryEvaluator
 from .measurements.parser import MeasurementParser
 from .measurements.loader import MeasurementLoader
 from .measurements.dataset import ReservoirDataset, ElecResDataset

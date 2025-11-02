@@ -52,12 +52,53 @@ class ReservoirDataset:
             
         logger.info(f"Loading data from {file_path}")
         try:
-            df = pd.read_csv(file_path, sep=r'\s+', engine='python')
+            # Try to detect the separator automatically
+            # Read first line to detect format
+            with open(file_path, 'r') as f:
+                first_line = f.readline().strip()
             
-            # Clean data
-            df.replace('nan', pd.NA, inplace=True)
-            df.dropna(axis=1, how='any', inplace=True)
-            df = df.astype(float)
+            # Check if it's comma-separated (has commas and reasonable number of columns)
+            comma_count = first_line.count(',')
+            space_count = len(first_line.split()) - 1  # -1 because split() counts fields, not separators
+            
+            if comma_count > space_count and comma_count > 2:
+                # Likely CSV format
+                df = pd.read_csv(file_path, sep=',', engine='python')
+                logger.info("Detected comma-separated format")
+            else:
+                # Likely whitespace-separated format
+                df = pd.read_csv(file_path, sep=r'\s+', engine='python')
+                logger.info("Detected whitespace-separated format")
+            
+            # Clean data - handle empty values properly
+            # Replace various representations of missing values with NaN
+            df.replace(['nan', 'NaN', 'NAN', '', ' '], np.nan, inplace=True)
+            
+            # Convert to numeric, coercing errors to NaN (handles empty strings)
+            numeric_columns = []
+            for col in df.columns:
+                try:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                    numeric_columns.append(col)
+                except:
+                    logger.warning(f"Could not convert column {col} to numeric")
+            
+            # Keep only numeric columns
+            df = df[numeric_columns]
+            
+            # Drop columns that are completely empty or contain only NaN values
+            initial_columns = len(df.columns)
+            df = df.dropna(axis=1, how='all')  # Drop columns with all NaN values
+            dropped_columns = initial_columns - len(df.columns)
+            
+            if dropped_columns > 0:
+                logger.info(f"Dropped {dropped_columns} empty columns")
+            
+            # Fill any remaining NaN values with np.nan (explicit)
+            df = df.fillna(np.nan)
+            
+            logger.info(f"Successfully loaded {df.shape[0]} rows and {df.shape[1]} columns")
+            logger.info(f"Columns with NaN values: {df.isnull().sum()[df.isnull().sum() > 0].to_dict()}")
             
             return df
         except Exception as e:

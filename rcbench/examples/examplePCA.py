@@ -6,8 +6,8 @@ It creates two main plots:
 1. PCA loadings for each node across different components
 2. Total Memory Capacity as a function of the number of selected PCA features
 
-Author: RCbench team
-Date: 2024
+Author: Davide Pilati
+Date: 2025
 """
 
 import logging

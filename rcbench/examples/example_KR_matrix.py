@@ -15,8 +15,8 @@ The example creates:
 - A matrix of synthetic node outputs with diverse feature representations
 - Each node contributes different aspects to the high-dimensional feature space
 
-Author: RCbench team
-Date: 2024
+Author: Davide Pilati
+Date: 2025
 """
 
 import logging

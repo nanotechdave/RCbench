@@ -15,8 +15,8 @@ The example creates:
 - A matrix of synthetic node outputs with nonlinear dynamics
 - Each node exhibits different nonlinear responses and memory properties
 
-Author: RCbench team
-Date: 2024
+Author: Davide Pilati
+Date: 2025
 """
 
 import logging

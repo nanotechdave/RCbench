@@ -15,8 +15,8 @@ The example creates:
 - A matrix of synthetic node outputs with nonlinear transformation capabilities
 - Each node exhibits different responses to waveform patterns
 
-Author: RCbench team
-Date: 2024
+Author: Davide Pilati
+Date: 2025
 """
 
 import logging

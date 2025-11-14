@@ -1,3 +1,12 @@
+"""
+Non-Linear Transformation (NLT) Task Evaluation Example
+
+This example demonstrates how to evaluate NLT using real experimental data.
+
+Author: Davide Pilati
+Date: 2025
+"""
+
 import logging
 from pathlib import Path
 import numpy as np
@@ -70,7 +79,7 @@ for target_name in evaluatorNLT.targets:
             metric='NMSE',
             feature_selection_method='kbest',
             num_features='all',
-            modeltype="Ridge",  # Changed from model to modeltype
+            modeltype="Ridge",  
             regression_alpha=0.1,
             plot=False
         )
@@ -84,10 +93,9 @@ logger.info("Generating comprehensive plots including frequency analysis...")
 
 # Generate plots for all targets 
 evaluatorNLT.plot_results()
-
-
     
 
 
     
    
+

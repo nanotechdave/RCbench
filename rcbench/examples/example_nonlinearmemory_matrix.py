@@ -21,7 +21,7 @@ This benchmark reveals the fundamental memory-nonlinearity trade-off:
 - Optimal reservoirs: balance both capabilities at the edge-of-chaos
 
 Author: Davide Pilati
-Date: 2025-01-31
+Date: 2025
 """
 
 import logging
@@ -29,6 +29,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from rcbench.tasks.nonlinearmemory import NonlinearMemoryEvaluator
+from rcbench.visualization.plot_config import NonlinearMemoryPlotConfig
 from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
@@ -183,13 +184,22 @@ def main():
     
     logger.info("Step 3: Creating Nonlinear Memory Evaluator...")
     
+    # Create plot configuration
+    plot_config = NonlinearMemoryPlotConfig(
+        save_dir=None,  # Set to './results' to save plots
+        plot_capacity_heatmap=True,
+        plot_tradeoff_analysis=True,
+        show_plot=True
+    )
+    
     evaluator = NonlinearMemoryEvaluator(
         input_signal=input_signal,
         nodes_output=nodes_output,
         tau_values=tau_values,
         nu_values=nu_values,
         random_state=42,
-        node_names=node_names
+        node_names=node_names,
+        plot_config=plot_config
     )
     
     logger.info("Evaluator created successfully!\n")
@@ -336,7 +346,7 @@ def main():
     logger.info("Generating visualization plots...")
     logger.info("="*60 + "\n")
     
-    evaluator.plot_results(save_dir=None)  # Set save_dir='./results' to save plots
+    evaluator.plot_results()
     
     logger.info("\n" + "="*60)
     logger.info("BENCHMARK COMPLETED SUCCESSFULLY!")

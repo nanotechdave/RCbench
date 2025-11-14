@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple, Union, Any, Optional
 from rcbench.tasks.baseevaluator import BaseEvaluator
 from rcbench.tasks.featureselector import FeatureSelector
 from rcbench.logger import get_logger
-from rcbench.visualization.plot_config import BasePlotConfig
+from rcbench.visualization.plot_config import NonlinearMemoryPlotConfig
 
 logger = get_logger(__name__)
 
@@ -34,7 +34,7 @@ class NonlinearMemoryEvaluator(BaseEvaluator):
                  nu_values: Optional[List[float]] = None,
                  random_state: int = 42,
                  node_names: Optional[List[str]] = None,
-                 plot_config: Optional[BasePlotConfig] = None) -> None:
+                 plot_config: Optional[NonlinearMemoryPlotConfig] = None) -> None:
         """
         Initialize the Nonlinear Memory evaluator.
         
@@ -53,7 +53,7 @@ class NonlinearMemoryEvaluator(BaseEvaluator):
             Random seed for reproducibility.
         node_names : List[str], optional
             Names of the nodes.
-        plot_config : BasePlotConfig, optional
+        plot_config : NonlinearMemoryPlotConfig, optional
             Configuration for plotting.
         """
         super().__init__(input_signal, nodes_output, node_names)
@@ -447,7 +447,7 @@ class NonlinearMemoryEvaluator(BaseEvaluator):
             'nu_values': self.nu_values
         }
     
-    def plot_results(self, save_dir: Optional[str] = None) -> None:
+    def plot_results(self) -> None:
         """
         Generate plots for the nonlinear memory benchmark results.
         
@@ -457,14 +457,15 @@ class NonlinearMemoryEvaluator(BaseEvaluator):
         3. Nonlinearity performance plot (averaged over τ)
         4. Selected parameter combinations predictions
         
-        Parameters:
-        -----------
-        save_dir : str, optional
-            Directory to save plots. If None, plots are shown but not saved.
+        Uses the plot_config settings to determine which plots to generate.
         """
         if self.evaluation_results is None:
             logger.warning("No evaluation results available. Run run_parameter_sweep first.")
             return
+        
+        # Use default config if none provided
+        if self.plot_config is None:
+            self.plot_config = NonlinearMemoryPlotConfig()
         
         try:
             import matplotlib.pyplot as plt
@@ -477,48 +478,57 @@ class NonlinearMemoryEvaluator(BaseEvaluator):
         nu_values = self.evaluation_results['nu_values']
         
         # 1. Heatmap of C(τ, ν)
-        fig, ax = plt.subplots(figsize=(10, 8))
-        im = ax.imshow(capacity_matrix, aspect='auto', origin='lower', cmap='viridis')
-        ax.set_xticks(range(len(nu_values)))
-        ax.set_yticks(range(len(tau_values)))
-        ax.set_xticklabels([f'{nu:.1f}' for nu in nu_values])
-        ax.set_yticklabels([f'{tau}' for tau in tau_values])
-        ax.set_xlabel('ν (Nonlinearity strength)', fontsize=12)
-        ax.set_ylabel('τ (Delay)', fontsize=12)
-        ax.set_title('Capacity C(τ, ν): Memory-Nonlinearity Trade-off', fontsize=14)
-        plt.colorbar(im, ax=ax, label='Capacity')
-        
-        if save_dir:
-            import os
-            os.makedirs(save_dir, exist_ok=True)
-            plt.savefig(os.path.join(save_dir, 'capacity_heatmap.png'), dpi=150, bbox_inches='tight')
-        plt.show()
+        if self.plot_config.plot_capacity_heatmap:
+            fig, ax = plt.subplots(figsize=self.plot_config.figsize, dpi=self.plot_config.dpi)
+            im = ax.imshow(capacity_matrix, aspect='auto', origin='lower', cmap='viridis')
+            ax.set_xticks(range(len(nu_values)))
+            ax.set_yticks(range(len(tau_values)))
+            ax.set_xticklabels([f'{nu:.1f}' for nu in nu_values])
+            ax.set_yticklabels([f'{tau}' for tau in tau_values])
+            ax.set_xlabel('ν (Nonlinearity strength)', fontsize=12)
+            ax.set_ylabel('τ (Delay)', fontsize=12)
+            ax.set_title('Capacity C(τ, ν): Memory-Nonlinearity Trade-off', fontsize=14)
+            plt.colorbar(im, ax=ax, label='Capacity')
+            
+            save_path = self.plot_config.get_save_path('capacity_heatmap.png')
+            if save_path:
+                plt.savefig(save_path, dpi=self.plot_config.dpi, bbox_inches='tight')
+            if self.plot_config.show_plot:
+                plt.show()
+            else:
+                plt.close()
         
         # 2. Trade-off analysis
-        tradeoff = self.get_memory_vs_nonlinearity_tradeoff()
-        
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-        
-        # Memory performance (averaged over ν)
-        ax1.plot(tau_values, tradeoff['memory_performance'], 'o-', linewidth=2, markersize=8)
-        ax1.set_xlabel('τ (Delay)', fontsize=12)
-        ax1.set_ylabel('Average Capacity', fontsize=12)
-        ax1.set_title('Memory Performance (averaged over ν)', fontsize=13)
-        ax1.grid(True, alpha=0.3)
-        
-        # Nonlinearity performance (averaged over τ)
-        ax2.plot(nu_values, tradeoff['nonlinearity_performance'], 's-', linewidth=2, markersize=8, color='orange')
-        ax2.set_xlabel('ν (Nonlinearity strength)', fontsize=12)
-        ax2.set_ylabel('Average Capacity', fontsize=12)
-        ax2.set_title('Nonlinearity Performance (averaged over τ)', fontsize=13)
-        ax2.set_xscale('log')
-        ax2.grid(True, alpha=0.3)
-        
-        plt.tight_layout()
-        
-        if save_dir:
-            plt.savefig(os.path.join(save_dir, 'tradeoff_analysis.png'), dpi=150, bbox_inches='tight')
-        plt.show()
+        if self.plot_config.plot_tradeoff_analysis:
+            tradeoff = self.get_memory_vs_nonlinearity_tradeoff()
+            
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(self.plot_config.figsize[0] * 1.4, self.plot_config.figsize[1]), 
+                                           dpi=self.plot_config.dpi)
+            
+            # Memory performance (averaged over ν)
+            ax1.plot(tau_values, tradeoff['memory_performance'], 'o-', linewidth=2, markersize=8)
+            ax1.set_xlabel('τ (Delay)', fontsize=12)
+            ax1.set_ylabel('Average Capacity', fontsize=12)
+            ax1.set_title('Memory Performance (averaged over ν)', fontsize=13)
+            ax1.grid(True, alpha=0.3)
+            
+            # Nonlinearity performance (averaged over τ)
+            ax2.plot(nu_values, tradeoff['nonlinearity_performance'], 's-', linewidth=2, markersize=8, color='orange')
+            ax2.set_xlabel('ν (Nonlinearity strength)', fontsize=12)
+            ax2.set_ylabel('Average Capacity', fontsize=12)
+            ax2.set_title('Nonlinearity Performance (averaged over τ)', fontsize=13)
+            ax2.set_xscale('log')
+            ax2.grid(True, alpha=0.3)
+            
+            plt.tight_layout()
+            
+            save_path = self.plot_config.get_save_path('tradeoff_analysis.png')
+            if save_path:
+                plt.savefig(save_path, dpi=self.plot_config.dpi, bbox_inches='tight')
+            if self.plot_config.show_plot:
+                plt.show()
+            else:
+                plt.close()
         
         # 3. Show best and worst cases
         best = self.get_best_performance()

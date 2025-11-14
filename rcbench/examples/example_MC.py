@@ -1,3 +1,12 @@
+"""
+Memory Capacity Evaluation Example
+
+This example demonstrates how to evaluate Memory Capacity using real experimental data.
+
+Author: Davide Pilati
+Date: 2025
+"""
+
 import logging
 from pathlib import Path
 
@@ -15,7 +24,6 @@ filenameMC = "074_INRiMARC_NWN_Pad129M_gridSE_MemoryCapacity_2024_04_02.txt"
 
 measurement_file_MC = BASE_DIR.parent / "tests" / "test_files" / filenameMC
 
-# Load the data directly using the ElecResDataset class
 dataset = ElecResDataset(measurement_file_MC)
 print(dataset.dataframe.head())
 # Get information about the nodes
@@ -63,7 +71,6 @@ evaluatorMC = MemoryCapacityEvaluator(
     plot_config=plot_config
 )
 
-
 resultsMC = evaluatorMC.calculate_total_memory_capacity(
     feature_selection_method='pca',
     num_features='all',
@@ -77,7 +84,6 @@ evaluatorMC.plot_results()
 
 logger.output(f"Total Memory Capacity: {resultsMC['total_memory_capacity']:.4f}\n")
 logger.info(f"keys: {resultsMC.keys()}")
-
     
 
 

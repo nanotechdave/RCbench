@@ -15,8 +15,8 @@ The example creates:
 - A matrix of synthetic node outputs with nonlinear responses
 - Each node exhibits different capabilities for function approximation
 
-Author: RCbench team
-Date: 2024
+Author: Davide Pilati
+Date: 2025
 """
 
 import logging

@@ -1,3 +1,12 @@
+"""
+Sin(x) Task Evaluation Example
+
+This example demonstrates how to evaluate Sin(x) approximation using real experimental data.
+
+Author: Davide Pilati
+Date: 2025
+"""
+
 import logging
 from pathlib import Path
 
@@ -63,10 +72,9 @@ logger.output(f"SinX Accuracy ({resultSinX['metric']}): {resultSinX['accuracy']:
 evaluatorSinX.plot_results(existing_results=resultSinX)
 
 
-
-
     
 
 
     
    
+

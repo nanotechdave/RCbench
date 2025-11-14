@@ -7,6 +7,9 @@ by computing performance on:
     y(t) = sin(ν * s(t - τ))
 
 where τ controls memory depth and ν controls nonlinearity strength.
+
+Author: Davide Pilati
+Date: 2025
 """
 
 import logging
@@ -14,6 +17,7 @@ import numpy as np
 from pathlib import Path
 
 from rcbench import ElecResDataset, NonlinearMemoryEvaluator
+from rcbench.visualization.plot_config import NonlinearMemoryPlotConfig
 from rcbench.logger import get_logger
 
 logger = get_logger(__name__)
@@ -62,6 +66,14 @@ def main():
     logger.info(f"  ν (nonlinearity) values: {nu_values}")
     logger.info(f"  Total combinations: {len(tau_values) * len(nu_values)}\n")
     
+    # Create plot configuration
+    plot_config = NonlinearMemoryPlotConfig(
+        save_dir=None,  # Set to a directory path to save plots
+        plot_capacity_heatmap=True,
+        plot_tradeoff_analysis=True,
+        show_plot=True
+    )
+    
     # Create the Nonlinear Memory evaluator
     evaluator = NonlinearMemoryEvaluator(
         input_signal=input_signal,
@@ -69,7 +81,8 @@ def main():
         tau_values=tau_values,
         nu_values=nu_values,
         random_state=42,
-        node_names=node_names
+        node_names=node_names,
+        plot_config=plot_config
     )
     
     # Run the parameter sweep
@@ -148,7 +161,7 @@ def main():
     
     # Generate plots
     logger.info("\nGenerating plots...")
-    evaluator.plot_results(save_dir=None)  # Set save_dir to save plots
+    evaluator.plot_results()
     
     logger.info("\n=== Benchmark completed successfully! ===")
     

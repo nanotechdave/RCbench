@@ -280,6 +280,60 @@ class NarmaPlotConfig(BasePlotConfig):
         self.plot_target_prediction = plot_target_prediction
 
 
+class NonlinearMemoryPlotConfig(BasePlotConfig):
+    """Configuration for Nonlinear Memory task plotting."""
+    
+    def __init__(self,
+                 figsize: Tuple[int, int] = (10, 6),
+                 dpi: int = 100,
+                 save_dir: Optional[str] = None,
+                 show_plot: bool = True,
+                 plot_capacity_heatmap: bool = True,
+                 plot_tradeoff_analysis: bool = True,
+                 plot_input_signal: bool = True,
+                 plot_output_responses: bool = True,
+                 plot_nonlinearity: bool = True,
+                 plot_frequency_analysis: bool = True,
+                 frequency_range: Optional[Tuple[float, float]] = None,
+                 nonlinearity_plot_style: str = 'scatter',
+                 prediction_sample_count: int = 200):
+        """
+        Initialize the Nonlinear Memory task plot configuration.
+        
+        Args:
+            figsize (Tuple[int, int]): Figure size (width, height)
+            dpi (int): Figure resolution
+            save_dir (Optional[str]): Directory to save plots to
+            show_plot (bool): Whether to display plots
+            plot_capacity_heatmap (bool): Whether to plot the capacity heatmap C(τ, ν)
+            plot_tradeoff_analysis (bool): Whether to plot memory vs nonlinearity trade-off
+            plot_input_signal (bool): Whether to plot the input signal
+            plot_output_responses (bool): Whether to plot node responses
+            plot_nonlinearity (bool): Whether to plot nonlinearity
+            plot_frequency_analysis (bool): Whether to plot frequency analysis
+            frequency_range (Optional[Tuple[float, float]]): Frequency range to display (min, max)
+            nonlinearity_plot_style (str): Style for nonlinearity plots ('scatter' or 'line')
+            prediction_sample_count (int): Number of samples to show in prediction plots
+        """
+        super().__init__(
+            figsize=figsize,
+            dpi=dpi,
+            save_dir=save_dir,
+            show_plot=show_plot,
+            plot_input_signal=plot_input_signal,
+            plot_output_responses=plot_output_responses,
+            plot_nonlinearity=plot_nonlinearity,
+            plot_frequency_analysis=plot_frequency_analysis,
+            frequency_range=frequency_range,
+            nonlinearity_plot_style=nonlinearity_plot_style,
+            prediction_sample_count=prediction_sample_count
+        )
+        
+        # Nonlinear Memory task specific options
+        self.plot_capacity_heatmap = plot_capacity_heatmap
+        self.plot_tradeoff_analysis = plot_tradeoff_analysis
+
+
 @dataclass
 class KernelPlotConfig(BasePlotConfig):
     """Configuration for Kernel Rank visualization plots."""
@@ -298,7 +352,7 @@ def create_plot_config(plot_type: str, **kwargs) -> BasePlotConfig:
     Create a plot configuration object based on the requested type.
     
     Args:
-        plot_type: Type of plot configuration ("mc", "nlt", "kernel", "sinx", "narma")
+        plot_type: Type of plot configuration ("mc", "nlt", "kernel", "sinx", "narma", "nonlinearmemory")
         **kwargs: Configuration parameters to override defaults
         
     Returns:
@@ -317,5 +371,7 @@ def create_plot_config(plot_type: str, **kwargs) -> BasePlotConfig:
         return SinxPlotConfig(**kwargs)
     elif plot_type.lower() == "narma":
         return NarmaPlotConfig(**kwargs)
+    elif plot_type.lower() == "nonlinearmemory":
+        return NonlinearMemoryPlotConfig(**kwargs)
     else:
         raise ValueError(f"Unknown plot type: {plot_type}") 

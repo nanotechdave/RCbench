@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="rcbench",
-    version="0.1.20",
+    version="0.1.30",
     description="Reservoir computing benchmark toolkit",
     #package_dir={"":"rcbench"},
     packages=find_packages(),
@@ -22,6 +22,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
         "Operating System :: OS Independent",
     ],
     install_requires=[

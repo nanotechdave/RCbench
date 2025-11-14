@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: rcbench
-Version: 0.1.20
+Version: 0.1.30
 Summary: Reservoir computing benchmark toolkit
 Home-page: https://github.com/nanotechdave/RCbench
 Author: Davide Pilati
@@ -12,6 +12,7 @@ Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
 Classifier: Programming Language :: Python :: 3.12
 Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
@@ -49,7 +50,7 @@ Dynamic: summary
 
 **RCbench (Reservoir Computing Benchmark Toolkit)** is a comprehensive Python package for evaluating and benchmarking reservoir computing systems. It provides standardized tasks, flexible visualization tools, and efficient evaluation methods for both physical and simulated reservoirs.
 
-## 🚀 Features
+## Features
 
 RCbench provides a complete suite of benchmark tasks and evaluation tools:
 
@@ -154,7 +155,7 @@ RCbench/
 
 ## 🔧 Installation
 
-### Install from PyPI (coming soon):
+### Install from PyPI:
 
 ```bash
 pip install rcbench
@@ -191,66 +192,26 @@ RCbench requires:
 ### Example 1: NLT Evaluation with Real Data
 
 ```python
-import logging
-from pathlib import Path
 from rcbench import ElecResDataset, NltEvaluator
-from rcbench.visualization.plot_config import NLTPlotConfig
-from rcbench.logger import get_logger
-
-logger = get_logger(__name__)
-logger.setLevel(logging.INFO)
 
 # Load measurement data
-measurement_file = Path("your_measurement_file.txt")
-dataset = ElecResDataset(measurement_file)
+dataset = ElecResDataset("your_measurement_file.txt")
 
-# Get data from dataset
-input_voltages = dataset.get_input_voltages()
+# Get input signal and node outputs
+input_signal = dataset.get_input_voltages()[dataset.input_nodes[0]]
 nodes_output = dataset.get_node_voltages()
-node_names = dataset.nodes
-
-# Use first input node
-primary_input = dataset.input_nodes[0]
-input_signal = input_voltages[primary_input]
-time = dataset.time
-
-# Create plot configuration
-plot_config = NLTPlotConfig(
-    save_dir=None,
-    plot_input_signal=True,
-    plot_output_responses=True,
-    plot_nonlinearity=True,
-    plot_frequency_analysis=True,
-    plot_target_prediction=True,
-    show_plot=True
-)
 
 # Create evaluator
 evaluator = NltEvaluator(
     input_signal=input_signal,
     nodes_output=nodes_output,
-    time_array=time,
-    waveform_type='sine',
-    node_names=node_names,
-    plot_config=plot_config
+    time_array=dataset.time
 )
 
-# Run evaluation for all targets
-for target_name in evaluator.targets:
-    result = evaluator.run_evaluation(
-        target_name=target_name,
-        metric='NMSE',
-        feature_selection_method='kbest',
-        num_features='all',
-        modeltype="Ridge",
-        regression_alpha=0.1,
-        train_ratio=0.8
-    )
-    logger.output(f"Target: {target_name}")
-    logger.output(f"  Accuracy (NMSE): {result['accuracy']:.6f}")
+# Run evaluation
+result = evaluator.run_evaluation(target_name='square_wave')
 
-# Generate comprehensive plots
-evaluator.plot_results()
+print(f"NMSE: {result['accuracy']:.6f}")
 ```
 
 ### Example 2: Memory Capacity Evaluation
@@ -301,11 +262,19 @@ evaluator.plot_results()
 
 ```python
 from rcbench import ElecResDataset, NonlinearMemoryEvaluator
+from rcbench.visualization.plot_config import NonlinearMemoryPlotConfig
 
 # Load data
 dataset = ElecResDataset("your_measurement_file.txt")
 input_signal = dataset.get_input_voltages()[dataset.input_nodes[0]]
 nodes_output = dataset.get_node_voltages()
+
+# Create plot configuration
+plot_config = NonlinearMemoryPlotConfig(
+    save_dir="./results",
+    plot_capacity_heatmap=True,
+    plot_tradeoff_analysis=True
+)
 
 # Create evaluator with parameter ranges
 evaluator = NonlinearMemoryEvaluator(
@@ -314,7 +283,8 @@ evaluator = NonlinearMemoryEvaluator(
     tau_values=[1, 2, 3, 4, 5, 6, 7, 8],  # Delay values
     nu_values=[0.1, 0.3, 1.0, 3.0, 10.0],  # Nonlinearity strengths
     random_state=42,
-    node_names=dataset.nodes
+    node_names=dataset.nodes,
+    plot_config=plot_config
 )
 
 # Run parameter sweep
@@ -329,14 +299,11 @@ results = evaluator.run_parameter_sweep(
 
 # Get summary
 summary = evaluator.summary()
-logger.output(f"Average capacity: {summary['average_capacity']:.4f}")
-logger.output(f"Best (τ, ν): ({summary['best_tau']}, {summary['best_nu']})")
-
-# Analyze trade-offs
-tradeoff = evaluator.get_memory_vs_nonlinearity_tradeoff()
+print(f"Average capacity: {summary['average_capacity']:.4f}")
+print(f"Best (τ, ν): ({summary['best_tau']}, {summary['best_nu']})")
 
 # Generate plots
-evaluator.plot_results(save_dir="./results")
+evaluator.plot_results()
 ```
 
 ### Example 4: Using Synthetic Data
@@ -438,7 +405,7 @@ Tests ability to compute nonlinear functions:
 Evaluates the effective dimensionality and nonlinearity of the reservoir's kernel matrix.
 
 ### 7. Generalization Rank
-Assesses how well the reservoir generalizes across different datasets.
+Assesses how well the reservoir generalizes across similar datasets.
 
 ---
 
@@ -455,7 +422,8 @@ from rcbench.visualization.plot_config import (
     NLTPlotConfig,
     MCPlotConfig,
     NarmaPlotConfig,
-    SinxPlotConfig
+    SinxPlotConfig,
+    NonlinearMemoryPlotConfig
 )
 
 # Example: NLT configuration
@@ -656,7 +624,7 @@ RCbench is licensed under the MIT License. See the [LICENSE](LICENSE) file for d
 
 ## 🙏 Acknowledgments
 
-This toolkit was developed at Politecnico di Torino for benchmarking physical reservoir computing systems, particularly nanowire networks and other unconventional computing substrates.
+This toolkit was developed at Politecnico di Torino and INRiM for benchmarking physical reservoir computing systems, particularly nanowire networks and other unconventional computing substrates.
 
 ---
 
@@ -677,4 +645,4 @@ If you use RCbench in your research, please cite:
 ---
 
 **Version:** 0.1.20  
-**Last Updated:** January 2025
+**Last Updated:** November 2025

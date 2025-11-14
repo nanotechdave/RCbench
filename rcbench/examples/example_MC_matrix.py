@@ -15,7 +15,7 @@ The example creates:
 - Each node has different delay, decay, and gain properties to simulate reservoir dynamics
 
 Author: Davide Pilati
-Date: 2025-07-24
+Date: 2025
 """
 
 import logging

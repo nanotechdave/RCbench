@@ -1,3 +1,12 @@
+"""
+Kernel Rank and Generalization Rank Evaluation Example
+
+This example demonstrates how to evaluate Kernel Rank and Generalization Rank using real experimental data.
+
+Author: Davide Pilati
+Date: 2025
+"""
+
 import logging
 from pathlib import Path
 
@@ -55,7 +64,6 @@ logger.output(f"  - KernelRank (linear): {kr_results['kernel_rank']}")
 logger.output(f"  - KernelRank (RBF): {kr_results_rbf['kernel_rank']}")
 logger.output(f"  - GeneralizationRank: {result_gen['generalization_rank']}")
 
-
-
     
    
+

@@ -1,3 +1,12 @@
+"""
+NARMA Task Evaluation Example
+
+This example demonstrates how to evaluate NARMA using real experimental data.
+
+Author: Davide Pilati
+Date: 2025
+"""
+
 import logging
 from pathlib import Path
 
@@ -66,10 +75,9 @@ logger.output(f"  - Accuracy: {resultsNARMA2['accuracy']:.5f}\n")
 
 # Generate all plots
 evaluatorNARMA.plot_results(existing_results=resultsNARMA2)
-
-
     
 
 
     
    
+

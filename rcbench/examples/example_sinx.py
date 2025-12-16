@@ -42,14 +42,14 @@ plot_config = SinxPlotConfig(
     show_plot=True
 )
 
-evaluatorSinX = SinxEvaluator(
+evaluatorSinx = SinxEvaluator(
     input_signal=input_signal, 
     nodes_output=nodes_output,
     node_names=node_names,
     plot_config=plot_config
 )
 
-resultSinX = evaluatorSinX.run_evaluation(
+resultSinx = evaluatorSinx.run_evaluation(
     metric='NMSE',
     feature_selection_method='kbest',
     num_features='all',
@@ -57,10 +57,10 @@ resultSinX = evaluatorSinX.run_evaluation(
     regression_alpha=0.1
 )
 
-logger.output(f"SinX Accuracy ({resultSinX['metric']}): {resultSinX['accuracy']:.4f}\n")
+logger.output(f"Sinx Accuracy ({resultSinx['metric']}): {resultSinx['accuracy']:.4f}\n")
 
 # Generate all plots
-evaluatorSinX.plot_results(existing_results=resultSinX)
+evaluatorSinx.plot_results(existing_results=resultSinx)
 
 
 

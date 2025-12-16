@@ -12,3 +12,12 @@ from .measurements.parser import MeasurementParser
 from .measurements.loader import MeasurementLoader
 from .measurements.dataset import ReservoirDataset, ElecResDataset
 from .logger import get_logger
+
+# Plot configurations
+from .visualization.plot_config import (
+    BasePlotConfig,
+    NLTPlotConfig,
+    MCPlotConfig,
+    SinxPlotConfig,
+    NarmaPlotConfig,
+)

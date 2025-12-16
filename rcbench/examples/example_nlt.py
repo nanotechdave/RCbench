@@ -63,6 +63,7 @@ evaluatorNLT = NltEvaluator(
 
 # Run evaluations for all targets
 logger.info("Running evaluations for all targets...")
+results = {}
 for target_name in evaluatorNLT.targets:
     try:
         result = evaluatorNLT.run_evaluation(
@@ -75,6 +76,7 @@ for target_name in evaluatorNLT.targets:
             train_ratio=0.6,
             plot=False
         )
+        results[target_name] = result
         logger.output(f"NLT Task: {target_name}")
         logger.output(f"  - Metric: {result['metric']}")
         logger.output(f"  - Accuracy: {result['accuracy']:.5f}")
@@ -83,8 +85,8 @@ for target_name in evaluatorNLT.targets:
 
 logger.info("Generating comprehensive plots including frequency analysis...")
 
-# Generate plots for all targets 
-evaluatorNLT.plot_results()
+# Generate plots for all targets using the computed results
+evaluatorNLT.plot_results(existing_results=results)
 
 
     

@@ -152,7 +152,7 @@ def main():
     
     # Display results
     logger.output(f"\n=== SIN(X) APPROXIMATION RESULTS ===")
-    logger.output(f"SinX Accuracy (NMSE): {results['accuracy']:.4f}")
+    logger.output(f"Sinx Accuracy (NMSE): {results['accuracy']:.4f}")
     logger.output(f"Metric used: {results['metric']}")
     logger.output(f"Selected features: {len(results['selected_features'])}")
     

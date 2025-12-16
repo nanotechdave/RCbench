@@ -212,6 +212,9 @@ class NltEvaluator(BaseEvaluator):
         model = self.train_regression(X_train_sel, y_train, modeltype, regression_alpha)
         y_pred = model.predict(X_test_sel)
         accuracy = self.evaluate_metric(y_test, y_pred, metric)
+        
+        # Update plot config with the train_ratio used
+        self.plotter.config.train_ratio = train_ratio
 
         if plot:
             # Create a dictionary of node outputs
@@ -258,6 +261,8 @@ class NltEvaluator(BaseEvaluator):
             'model': model,
             'y_pred': y_pred,
             'y_test': y_test,
+            'y_train': y_train,
+            'train_ratio': train_ratio,
         }
         
     def plot_results(self, existing_results: Optional[Dict[str, Dict[str, Any]]] = None) -> None:
@@ -277,12 +282,14 @@ class NltEvaluator(BaseEvaluator):
             results = existing_results
         else:
             # We need to run evaluation for each target first to get predictions
+            # Use train_ratio from config
             for target_name in self.targets:
                 try:
                     result = self.run_evaluation(
                         target_name=target_name,
                         feature_selection_method='pca',
                         num_features='all',
+                        train_ratio=self.plotter.config.train_ratio,
                         plot=False  # Don't plot individually
                     )
                     results[target_name] = result
@@ -307,11 +314,13 @@ class NltEvaluator(BaseEvaluator):
             if 'y_pred' in result and 'y_test' in result:
                 # For each target, get correct time array for test data
                 
-                # Estimate train_ratio from data lengths if needed
-                if 'y_train' in result and len(result.get('y_train', [])) > 0:
+                # Get train_ratio: first from result, then from config
+                if 'train_ratio' in result:
+                    train_ratio = result['train_ratio']
+                elif 'y_train' in result and len(result.get('y_train', [])) > 0:
                     train_ratio = len(result['y_train']) / (len(result['y_train']) + len(result['y_test']))
                 else:
-                    train_ratio = 0.8
+                    train_ratio = self.plotter.config.train_ratio
                 
                 # Calculate test indices based on the actual test data length
                 total_samples = len(self.time)

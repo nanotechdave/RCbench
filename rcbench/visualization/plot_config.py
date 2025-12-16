@@ -16,7 +16,8 @@ class BasePlotConfig:
                 plot_frequency_analysis: bool = True,
                 frequency_range: Optional[Tuple[float, float]] = None,
                 nonlinearity_plot_style: str = 'scatter',
-                prediction_sample_count: int = 200):
+                prediction_sample_count: int = 200,
+                train_ratio: float = 0.8):
         """
         Initialize the base plot configuration.
         
@@ -32,6 +33,7 @@ class BasePlotConfig:
             frequency_range (Optional[Tuple[float, float]]): Frequency range to display (min, max)
             nonlinearity_plot_style (str): Style for nonlinearity plots ('scatter' or 'line')
             prediction_sample_count (int): Number of samples to display in prediction plots
+            train_ratio (float): Train/test split ratio used for plotting test data
         """
         self.figsize = figsize
         self.dpi = dpi
@@ -48,6 +50,7 @@ class BasePlotConfig:
         self.frequency_range = frequency_range
         self.nonlinearity_plot_style = nonlinearity_plot_style
         self.prediction_sample_count = prediction_sample_count
+        self.train_ratio = train_ratio
     
     def get_save_path(self, filename: str) -> Optional[str]:
         """
@@ -85,7 +88,8 @@ class MCPlotConfig(BasePlotConfig):
                  plot_nonlinearity: bool = True,
                  plot_frequency_analysis: bool = True,
                  frequency_range: Optional[Tuple[float, float]] = None,
-                 nonlinearity_plot_style: str = 'scatter'):
+                 nonlinearity_plot_style: str = 'scatter',
+                 train_ratio: float = 0.8):
         """
         Initialize the Memory Capacity plot configuration.
         
@@ -105,6 +109,7 @@ class MCPlotConfig(BasePlotConfig):
             plot_frequency_analysis (bool): Whether to plot frequency analysis
             frequency_range (Optional[Tuple[float, float]]): Frequency range to display (min, max)
             nonlinearity_plot_style (str): Style for nonlinearity plots ('scatter' or 'line')
+            train_ratio (float): Train/test split ratio used for plotting test data
         """
         super().__init__(
             figsize=figsize,
@@ -117,7 +122,8 @@ class MCPlotConfig(BasePlotConfig):
             plot_frequency_analysis=plot_frequency_analysis,
             frequency_range=frequency_range,
             nonlinearity_plot_style=nonlinearity_plot_style,
-            prediction_sample_count=prediction_sample_count
+            prediction_sample_count=prediction_sample_count,
+            train_ratio=train_ratio
         )
         
         # MC-specific options
@@ -142,7 +148,8 @@ class NLTPlotConfig(BasePlotConfig):
                  plot_target_prediction: bool = True,
                  frequency_range: Optional[Tuple[float, float]] = None,
                  nonlinearity_plot_style: str = 'scatter',
-                 prediction_sample_count: int = 200):
+                 prediction_sample_count: int = 200,
+                 train_ratio: float = 0.8):
         """
         Initialize the Non-Linear Transformation plot configuration.
         
@@ -159,6 +166,7 @@ class NLTPlotConfig(BasePlotConfig):
             frequency_range (Optional[Tuple[float, float]]): Frequency range to display (min, max)
             nonlinearity_plot_style (str): Style for nonlinearity plots ('scatter' or 'line')
             prediction_sample_count (int): Number of samples to show in prediction plots
+            train_ratio (float): Train/test split ratio used for plotting test data
         """
         super().__init__(
             figsize=figsize,
@@ -171,7 +179,8 @@ class NLTPlotConfig(BasePlotConfig):
             plot_frequency_analysis=plot_frequency_analysis,
             frequency_range=frequency_range,
             nonlinearity_plot_style=nonlinearity_plot_style,
-            prediction_sample_count=prediction_sample_count
+            prediction_sample_count=prediction_sample_count,
+            train_ratio=train_ratio
         )
         
         # NLT-specific options
@@ -193,7 +202,8 @@ class SinxPlotConfig(BasePlotConfig):
                  plot_target_prediction: bool = True,
                  frequency_range: Optional[Tuple[float, float]] = None,
                  nonlinearity_plot_style: str = 'scatter',
-                 prediction_sample_count: int = 200):
+                 prediction_sample_count: int = 200,
+                 train_ratio: float = 0.8):
         """
         Initialize the Sin(x) task plot configuration.
         
@@ -210,6 +220,7 @@ class SinxPlotConfig(BasePlotConfig):
             frequency_range (Optional[Tuple[float, float]]): Frequency range to display (min, max)
             nonlinearity_plot_style (str): Style for nonlinearity plots ('scatter' or 'line')
             prediction_sample_count (int): Number of samples to show in prediction plots
+            train_ratio (float): Train/test split ratio used for plotting test data
         """
         super().__init__(
             figsize=figsize,
@@ -222,7 +233,8 @@ class SinxPlotConfig(BasePlotConfig):
             plot_frequency_analysis=plot_frequency_analysis,
             frequency_range=frequency_range,
             nonlinearity_plot_style=nonlinearity_plot_style,
-            prediction_sample_count=prediction_sample_count
+            prediction_sample_count=prediction_sample_count,
+            train_ratio=train_ratio
         )
         
         # Sin(x) task specific options
@@ -244,7 +256,8 @@ class NarmaPlotConfig(BasePlotConfig):
                  plot_target_prediction: bool = True,
                  frequency_range: Optional[Tuple[float, float]] = None,
                  nonlinearity_plot_style: str = 'scatter',
-                 prediction_sample_count: int = 200):
+                 prediction_sample_count: int = 200,
+                 train_ratio: float = 0.8):
         """
         Initialize the NARMA task plot configuration.
         
@@ -261,6 +274,7 @@ class NarmaPlotConfig(BasePlotConfig):
             frequency_range (Optional[Tuple[float, float]]): Frequency range to display (min, max)
             nonlinearity_plot_style (str): Style for nonlinearity plots ('scatter' or 'line')
             prediction_sample_count (int): Number of samples to show in prediction plots
+            train_ratio (float): Train/test split ratio used for plotting test data
         """
         super().__init__(
             figsize=figsize,
@@ -273,7 +287,8 @@ class NarmaPlotConfig(BasePlotConfig):
             plot_frequency_analysis=plot_frequency_analysis,
             frequency_range=frequency_range,
             nonlinearity_plot_style=nonlinearity_plot_style,
-            prediction_sample_count=prediction_sample_count
+            prediction_sample_count=prediction_sample_count,
+            train_ratio=train_ratio
         )
         
         # NARMA task specific options

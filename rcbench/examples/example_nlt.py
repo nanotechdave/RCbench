@@ -72,6 +72,7 @@ for target_name in evaluatorNLT.targets:
             num_features='all',
             modeltype="Ridge",  # Changed from model to modeltype
             regression_alpha=0.1,
+            train_ratio=0.6,
             plot=False
         )
         logger.output(f"NLT Task: {target_name}")

@@ -46,7 +46,7 @@ logger.setLevel(logging.INFO)
 
 def generate_synthetic_prc_data(
     output_dir: str,
-    n_samples: int = 1000,
+    n_samples: int = 3000,
     n_readouts: int = 50,
     prefix: str = "scan",
     n_files: int = 1,

@@ -419,11 +419,11 @@ def benchmark_ipc(data: Dict[str, np.ndarray]) -> TimingResult:
 
 def benchmark_kernel_rank(data: Dict[str, np.ndarray]) -> TimingResult:
     """Benchmark KernelRankEvaluator."""
-    # KernelRankEvaluator only needs nodes_output and kernel parameters
+    # KernelRankEvaluator with input signal (combined mode per Wringe et al. 2025)
     evaluator = KernelRankEvaluator(
         nodes_output=data['reservoir_states_random'],
-        kernel='rbf',
-        sigma=1.0,
+        input_signal=data['random_input'],  # Include input for combined dynamics
+        kernel='linear',  # Linear is faster than RBF
         threshold=0.01
     )
     
@@ -436,7 +436,8 @@ def benchmark_kernel_rank(data: Dict[str, np.ndarray]) -> TimingResult:
         n_samples=data['n_samples'],
         n_nodes=data['n_nodes'],
         additional_info={
-            'kernel': 'rbf',
+            'kernel': 'linear',
+            'include_input': True,
             'rank': result.get('kernel_rank', 'N/A')
         }
     )
@@ -654,8 +655,8 @@ def main():
     
     parser = argparse.ArgumentParser(description='RCbench Evaluator Performance Benchmark')
     parser.add_argument('--samples', type=int, default=3000, help='Number of samples')
-    parser.add_argument('--nodes', type=int, default=50, help='Number of reservoir nodes')
-    parser.add_argument('--runs', type=int, default=3, help='Number of runs per benchmark')
+    parser.add_argument('--nodes', type=int, default=500, help='Number of reservoir nodes')
+    parser.add_argument('--runs', type=int, default=10, help='Number of runs per benchmark')
     parser.add_argument('--detailed', action='store_true', help='Show detailed results')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
     

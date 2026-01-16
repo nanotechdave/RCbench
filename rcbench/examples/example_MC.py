@@ -49,7 +49,7 @@ plot_config = MCPlotConfig(
     plot_mc_curve=True,          # Plot the memory capacity vs delay curve
     plot_predictions=True,        # Plot predictions for each delay
     plot_total_mc=True,           # Plot cumulative memory capacity
-    max_delays_to_plot=5,         # Maximum number of delays to plot predictions for
+    max_delays_to_plot=3,         # Maximum number of delays to plot predictions for
     
     # General reservoir property plots
     plot_input_signal=True,       # Plot the input signal

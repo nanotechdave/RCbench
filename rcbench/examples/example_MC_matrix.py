@@ -91,7 +91,7 @@ def main():
     logger.info("Generating synthetic reservoir data...")
     time_vector, input_signal, nodes_output, node_names = generate_synthetic_reservoir_data(
         n_samples=3000,
-        n_nodes=15,
+        n_nodes=14,
         input_amplitude=0.8,
         noise_level=0.05
     )
@@ -114,7 +114,7 @@ def main():
     evaluator = MemoryCapacityEvaluator(
         input_signal=input_signal,
         nodes_output=nodes_output,
-        max_delay=25,  # Test memory up to 25 time steps
+        max_delay=30,  # Test memory up to 25 time steps
         random_state=42,
         node_names=node_names,
         plot_config=plot_config
@@ -124,7 +124,7 @@ def main():
     logger.info("Running Memory Capacity evaluation...")
     results = evaluator.calculate_total_memory_capacity(
         feature_selection_method='pca',
-        num_features=15,  # Use top 10 components
+        num_features='all',  
         modeltype="Ridge",
         regression_alpha=0.1,
         train_ratio=0.8

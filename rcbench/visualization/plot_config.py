@@ -349,6 +349,70 @@ class NonlinearMemoryPlotConfig(BasePlotConfig):
         self.plot_tradeoff_analysis = plot_tradeoff_analysis
 
 
+class IPCPlotConfig(BasePlotConfig):
+    """Configuration for Information Processing Capacity (IPC) plotting.
+    
+    Based on Dambre et al., "Information Processing Capacity of Dynamical Systems",
+    Scientific Reports 2, 514 (2012).
+    """
+    
+    def __init__(self,
+                 figsize: Tuple[int, int] = (10, 6),
+                 dpi: int = 100,
+                 save_dir: Optional[str] = None,
+                 show_plot: bool = True,
+                 plot_capacity_by_degree: bool = True,
+                 plot_tradeoff: bool = True,
+                 plot_summary: bool = True,
+                 plot_input_signal: bool = True,
+                 plot_output_responses: bool = True,
+                 plot_nonlinearity: bool = True,
+                 plot_frequency_analysis: bool = False,
+                 frequency_range: Optional[Tuple[float, float]] = None,
+                 nonlinearity_plot_style: str = 'scatter',
+                 prediction_sample_count: int = 200,
+                 train_ratio: float = 0.8):
+        """
+        Initialize the IPC plot configuration.
+        
+        Args:
+            figsize (Tuple[int, int]): Figure size (width, height)
+            dpi (int): Figure resolution
+            save_dir (Optional[str]): Directory to save plots to
+            show_plot (bool): Whether to display plots
+            plot_capacity_by_degree (bool): Whether to plot capacity by polynomial degree
+            plot_tradeoff (bool): Whether to plot memory-nonlinearity trade-off
+            plot_summary (bool): Whether to plot capacity summary bar chart
+            plot_input_signal (bool): Whether to plot the input signal
+            plot_output_responses (bool): Whether to plot node responses
+            plot_nonlinearity (bool): Whether to plot nonlinearity
+            plot_frequency_analysis (bool): Whether to plot frequency analysis
+            frequency_range (Optional[Tuple[float, float]]): Frequency range to display (min, max)
+            nonlinearity_plot_style (str): Style for nonlinearity plots ('scatter' or 'line')
+            prediction_sample_count (int): Number of samples to show in prediction plots
+            train_ratio (float): Train/test split ratio used for plotting test data
+        """
+        super().__init__(
+            figsize=figsize,
+            dpi=dpi,
+            save_dir=save_dir,
+            show_plot=show_plot,
+            plot_input_signal=plot_input_signal,
+            plot_output_responses=plot_output_responses,
+            plot_nonlinearity=plot_nonlinearity,
+            plot_frequency_analysis=plot_frequency_analysis,
+            frequency_range=frequency_range,
+            nonlinearity_plot_style=nonlinearity_plot_style,
+            prediction_sample_count=prediction_sample_count,
+            train_ratio=train_ratio
+        )
+        
+        # IPC-specific options
+        self.plot_capacity_by_degree = plot_capacity_by_degree
+        self.plot_tradeoff = plot_tradeoff
+        self.plot_summary = plot_summary
+
+
 @dataclass
 class KernelPlotConfig(BasePlotConfig):
     """Configuration for Kernel Rank visualization plots."""
@@ -367,7 +431,7 @@ def create_plot_config(plot_type: str, **kwargs) -> BasePlotConfig:
     Create a plot configuration object based on the requested type.
     
     Args:
-        plot_type: Type of plot configuration ("mc", "nlt", "kernel", "sinx", "narma", "nonlinearmemory")
+        plot_type: Type of plot configuration ("mc", "nlt", "kernel", "sinx", "narma", "nonlinearmemory", "ipc")
         **kwargs: Configuration parameters to override defaults
         
     Returns:
@@ -388,5 +452,7 @@ def create_plot_config(plot_type: str, **kwargs) -> BasePlotConfig:
         return NarmaPlotConfig(**kwargs)
     elif plot_type.lower() == "nonlinearmemory":
         return NonlinearMemoryPlotConfig(**kwargs)
+    elif plot_type.lower() == "ipc":
+        return IPCPlotConfig(**kwargs)
     else:
         raise ValueError(f"Unknown plot type: {plot_type}") 

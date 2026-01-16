@@ -728,19 +728,5 @@ If you use RCbench in your research, please cite:
 
 ---
 
-## References
-
-Key papers referenced in this implementation:
-
-1. Dambre, J., Verstraeten, D., Schrauwen, B. & Massar, S. "Information Processing Capacity of Dynamical Systems". *Scientific Reports* 2, 514 (2012).
-
-2. Jaeger, H. "Short Term Memory in Echo State Networks". Fraunhofer Institute AIS, Tech. rep. 152 (2002).
-
-3. Wringe, C., Trefzer, M., & Stepney, S. "Reservoir Computing Benchmarks: a tutorial review and critique". arXiv:2405.06561 (2025).
-
-4. Dale, M., Miller, J.F., Stepney, S. & Trefzer, M.A. "A substrate-independent framework to characterize reservoir computers". *Proc. R. Soc. A* 475 (2019).
-
----
-
 **Version:** 0.1.50  
-**Last Updated:** January 2026
+**Last Updated:** November 2025

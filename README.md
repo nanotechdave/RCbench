@@ -708,7 +708,7 @@ RCbench is licensed under the MIT License. See the [LICENSE](LICENSE) file for d
 
 ## Acknowledgments
 
-This toolkit was developed at Politecnico di Torino and INRiM for benchmarking physical reservoir computing systems, particularly nanowire networks and other unconventional computing substrates.
+This work was developed in collaboration between the Italian National Institute of Metrology (INRiM), Polytechnic of Turin and University of Pisa. This work was funded by the Europen Union (ERC, "MEMBRAIN", No. 101160604), website: https://membrain-eu.com, and NEURONE, a project funded by the European Union - Next Generation EU, M4C1 CUP I53D23003600006, under program PRIN 2022 (prj code 20229JRTZA). Views and opinions expressed are however those of the authors only and do not necessarily reflect those of the European Union or the European Research Council. Neither the European Union nor the granting authority can be held responsible for them.
 
 ---
 

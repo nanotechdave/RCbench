@@ -156,7 +156,7 @@ def benchmark_memory_capacity(
     # Create MC plot configuration
     plot_config = MCPlotConfig(
         save_dir=None,
-        figsize=(10, 6),
+        figsize=(6,4),
         plot_mc_curve=True,
         plot_predictions=True,
         plot_total_mc=True,
@@ -296,7 +296,7 @@ def main():
     # =========================================================================
     
     # Reservoir parameters
-    N_UNITS = 100           # Number of reservoir neurons
+    N_UNITS = 16          # Number of reservoir neurons
     LEAK_RATE = 0.3         # Leak rate (memory vs reactivity trade-off)
     SPECTRAL_RADIUS = 0.9   # Spectral radius (edge of chaos)
     INPUT_SCALING = 0.1     # Input weight scaling

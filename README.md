@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-0.1.20-green)
+![Version](https://img.shields.io/badge/version-0.1.50-green)
 
 **RCbench (Reservoir Computing Benchmark Toolkit)** is a comprehensive Python package for evaluating and benchmarking reservoir computing systems. It provides standardized tasks, flexible visualization tools, and efficient evaluation methods for both physical and simulated reservoirs.
 
@@ -16,9 +16,16 @@ RCbench provides a complete suite of benchmark tasks and evaluation tools:
 - **NARMA (Nonlinear Auto-Regressive Moving Average):** Test with NARMA models of different orders (NARMA-2, NARMA-10, etc.)
 - **Memory Capacity:** Measure short and long-term memory capabilities with linear memory capacity evaluation
 - **Nonlinear Memory:** Map the memory-nonlinearity trade-off using `y(t) = sin(ν * s(t-τ))` benchmark
+- **Information Processing Capacity (IPC):** Comprehensive capacity framework from Dambre et al. (2012) measuring both linear memory and nonlinear computational capacity using Legendre polynomials
 - **Sin(x) Approximation:** Assess reservoir ability to transform a random signal into sin(x)
-- **Kernel Rank:** Evaluate the nonlinearity and kernel quality of the reservoir
+- **Kernel Rank:** Evaluate the effective dimensionality and nonlinearity of the reservoir (based on Wringe et al. 2025)
 - **Generalization Rank:** Assess the generalization capabilities across different datasets
+
+### **Framework Integration**
+
+- **ReservoirPy Integration:** Examples showing how to benchmark Echo State Networks created with ReservoirPy
+- **PRCpy Integration:** Examples demonstrating integration with the Physical Reservoir Computing Python package
+- **Performance Benchmarking:** Tools for measuring computational time of each evaluator
 
 ### **Advanced Visualization**
 
@@ -27,6 +34,7 @@ RCbench provides a complete suite of benchmark tasks and evaluation tools:
 - Frequency domain analysis of reservoir behavior
 - Target vs. prediction comparison with proper time alignment
 - Heatmaps for capacity matrices and parameter sweeps
+- IPC capacity decomposition plots (linear memory vs nonlinear capacity)
   
 ### **Efficient Data Handling**
 
@@ -45,7 +53,7 @@ RCbench provides a complete suite of benchmark tasks and evaluation tools:
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```plaintext
 RCbench/
@@ -62,8 +70,12 @@ RCbench/
 │   │   ├── example_MC_matrix.py     # Memory Capacity with synthetic data
 │   │   ├── example_nonlinearmemory.py        # Nonlinear Memory with real data
 │   │   ├── example_nonlinearmemory_matrix.py # Nonlinear Memory with synthetic data
+│   │   ├── example_ipc.py           # Information Processing Capacity
 │   │   ├── example_KR.py            # Kernel Rank
 │   │   ├── example_KR_matrix.py     # Kernel Rank with synthetic data
+│   │   ├── example_reservoirpy.py   # ReservoirPy ESN integration
+│   │   ├── example_prcpy.py         # PRCpy integration
+│   │   ├── benchmark_evaluators.py  # Performance benchmarking
 │   │   └── examplePCA.py            # Feature selection example
 │   ├── measurements/                # Data handling
 │   │   ├── __init__.py
@@ -78,9 +90,13 @@ RCbench/
 │   │   ├── narma.py                 # NARMA task
 │   │   ├── memorycapacity.py        # Memory Capacity task
 │   │   ├── nonlinearmemory.py       # Nonlinear Memory benchmark
+│   │   ├── ipc.py                   # Information Processing Capacity
 │   │   ├── sinx.py                  # Sin(x) approximation task
 │   │   ├── kernelrank.py            # Kernel Rank evaluation
-│   │   └── generalizationrank.py    # Generalization Rank evaluation
+│   │   ├── generalizationrank.py    # Generalization Rank evaluation
+│   │   └── taskManuals/             # Task documentation
+│   │       ├── NONLINEARMEMORY_README.md
+│   │       └── IPC_README.md
 │   ├── visualization/               # Plotting utilities
 │   │   ├── __init__.py
 │   │   ├── base_plotter.py          # Base plotting functionality
@@ -109,7 +125,7 @@ RCbench/
 
 ---
 
-## 🔧 Installation
+## Installation
 
 ### Install from PyPI:
 
@@ -141,9 +157,13 @@ RCbench requires:
 - scikit-learn
 - pandas
 
+Optional dependencies for integration examples:
+- reservoirpy (for ReservoirPy integration)
+- prcpy (for PRCpy integration)
+
 ---
 
-## 🚦 Quick Start
+## Quick Start
 
 ### Example 1: NLT Evaluation with Real Data
 
@@ -173,8 +193,7 @@ print(f"NMSE: {result['accuracy']:.6f}")
 ### Example 2: Memory Capacity Evaluation
 
 ```python
-from rcbench import ElecResDataset, MemoryCapacityEvaluator
-from rcbench.visualization.plot_config import MCPlotConfig
+from rcbench import ElecResDataset, MemoryCapacityEvaluator, MCPlotConfig
 
 # Load data
 dataset = ElecResDataset("your_measurement_file.txt")
@@ -208,106 +227,146 @@ results = evaluator.calculate_total_memory_capacity(
     train_ratio=0.8
 )
 
-logger.output(f"Total Memory Capacity: {results['total_memory_capacity']:.4f}")
+print(f"Total Memory Capacity: {results['total_memory_capacity']:.4f}")
 
 # Generate plots
 evaluator.plot_results()
 ```
 
-### Example 3: Nonlinear Memory Benchmark
-
-```python
-from rcbench import ElecResDataset, NonlinearMemoryEvaluator
-from rcbench.visualization.plot_config import NonlinearMemoryPlotConfig
-
-# Load data
-dataset = ElecResDataset("your_measurement_file.txt")
-input_signal = dataset.get_input_voltages()[dataset.input_nodes[0]]
-nodes_output = dataset.get_node_voltages()
-
-# Create plot configuration
-plot_config = NonlinearMemoryPlotConfig(
-    save_dir="./results",
-    plot_capacity_heatmap=True,
-    plot_tradeoff_analysis=True
-)
-
-# Create evaluator with parameter ranges
-evaluator = NonlinearMemoryEvaluator(
-    input_signal=input_signal,
-    nodes_output=nodes_output,
-    tau_values=[1, 2, 3, 4, 5, 6, 7, 8],  # Delay values
-    nu_values=[0.1, 0.3, 1.0, 3.0, 10.0],  # Nonlinearity strengths
-    random_state=42,
-    node_names=dataset.nodes,
-    plot_config=plot_config
-)
-
-# Run parameter sweep
-results = evaluator.run_parameter_sweep(
-    feature_selection_method='kbest',
-    num_features='all',
-    modeltype='Ridge',
-    regression_alpha=0.1,
-    train_ratio=0.8,
-    metric='NMSE'
-)
-
-# Get summary
-summary = evaluator.summary()
-print(f"Average capacity: {summary['average_capacity']:.4f}")
-print(f"Best (τ, ν): ({summary['best_tau']}, {summary['best_nu']})")
-
-# Generate plots
-evaluator.plot_results()
-```
-
-### Example 4: Using Synthetic Data
+### Example 3: Information Processing Capacity (IPC)
 
 ```python
 import numpy as np
-from rcbench import NarmaEvaluator
+from rcbench import IPCEvaluator, IPCPlotConfig
 
-# Generate synthetic data
-n_samples = 2000
-n_nodes = 15
-
+# Generate random input (must be uniform in [-1, 1])
 np.random.seed(42)
-input_signal = np.random.uniform(-1, 1, n_samples)
+input_signal = np.random.uniform(-1, 1, size=5000)
 
-# Create synthetic reservoir responses
-nodes_output = np.zeros((n_samples, n_nodes))
-for i in range(n_nodes):
-    delay = np.random.randint(1, 5)
-    nonlinearity = 0.5 + np.random.rand() * 2
-    nodes_output[:, i] = np.tanh(nonlinearity * np.roll(input_signal, delay))
-    nodes_output[:, i] += np.random.randn(n_samples) * 0.05
+# Your reservoir states (shape: [time_steps, n_nodes])
+reservoir_states = ...  # Your reservoir output
 
-node_names = [f'Node_{i}' for i in range(n_nodes)]
-
-# Evaluate
-evaluator = NarmaEvaluator(
-    input_signal=input_signal,
-    nodes_output=nodes_output,
-    node_names=node_names,
-    order=2
+# Create plot configuration
+plot_config = IPCPlotConfig(
+    save_dir='./results',
+    show_plot=True,
+    plot_capacity_by_degree=True,
+    plot_tradeoff=True,
+    plot_summary=True
 )
 
-result = evaluator.run_evaluation(
-    metric='NMSE',
-    feature_selection_method='kbest',
+# Create evaluator
+evaluator = IPCEvaluator(
+    input_signal=input_signal,
+    nodes_output=reservoir_states,
+    max_delay=10,           # Maximum delay to consider
+    max_degree=3,           # Maximum polynomial degree
+    random_state=42,
+    plot_config=plot_config
+)
+
+# Calculate total information processing capacity
+results = evaluator.calculate_ipc(
+    feature_selection_method='pca',
     num_features='all',
-    modeltype="Ridge",
-    regression_alpha=1.0,
+    modeltype='Ridge',
+    regression_alpha=0.1,
     train_ratio=0.8
 )
 
-logger.output(f"NARMA-{evaluator.order} Accuracy: {result['accuracy']:.6f}")
+print(f"Total Capacity: {results['total_capacity']:.4f}")
+print(f"Linear Memory: {results['linear_memory_capacity']:.4f}")
+print(f"Nonlinear Capacity: {results['nonlinear_capacity']:.4f}")
+
+# Generate plots
+evaluator.plot_results()
+```
+
+### Example 4: ReservoirPy Integration
+
+```python
+import numpy as np
+from reservoirpy.nodes import Reservoir
+from rcbench import MemoryCapacityEvaluator, SinxEvaluator, MCPlotConfig
+
+# Create reservoir using ReservoirPy
+reservoir = Reservoir(
+    units=100,
+    lr=0.3,           # Leak rate
+    sr=0.9,           # Spectral radius
+    input_scaling=0.1
+)
+
+# Generate input signal
+np.random.seed(42)
+n_samples = 5000
+input_signal = np.random.uniform(-1, 1, n_samples)
+
+# Run reservoir
+states = reservoir.run(input_signal.reshape(-1, 1))
+nodes_output = np.array(states)
+
+# Benchmark with Memory Capacity
+mc_evaluator = MemoryCapacityEvaluator(
+    input_signal=input_signal,
+    nodes_output=nodes_output,
+    max_delay=30,
+    plot_config=MCPlotConfig(show_plot=True)
+)
+
+mc_results = mc_evaluator.calculate_total_memory_capacity(
+    feature_selection_method='pca',
+    modeltype='Ridge',
+    train_ratio=0.8
+)
+
+print(f"Total Memory Capacity: {mc_results['total_memory_capacity']:.4f}")
+```
+
+### Example 5: Kernel Rank Evaluation
+
+```python
+from rcbench.tasks.kernelrank import KernelRankEvaluator
+from rcbench.tasks.generalizationrank import GeneralizationRankEvaluator
+
+# Using combined mode (recommended per Wringe et al. 2025)
+kr_evaluator = KernelRankEvaluator(
+    nodes_output=nodes_output,
+    input_signal=input_signal,  # Include input for combined dynamics
+    kernel='linear',
+    threshold=1e-6
+)
+
+kr_results = kr_evaluator.run_evaluation()
+print(f"Kernel Rank: {kr_results['kernel_rank']}")
+print(f"Features: {kr_results['n_features']}")
+
+# Generalization Rank
+gr_evaluator = GeneralizationRankEvaluator(nodes_output, threshold=1e-6)
+gr_results = gr_evaluator.run_evaluation()
+print(f"Generalization Rank: {gr_results['generalization_rank']}")
+```
+
+### Example 6: Performance Benchmarking
+
+```python
+# Run the benchmark script to measure evaluator computation times
+# python rcbench/examples/benchmark_evaluators.py --runs 3
+
+# The script measures execution time for:
+# - MemoryCapacityEvaluator
+# - SinxEvaluator
+# - NltEvaluator
+# - NarmaEvaluator
+# - NonlinearMemoryEvaluator
+# - IPCEvaluator
+# - KernelRankEvaluator
+# - GeneralizationRankEvaluator
 ```
 
 ---
 
-## 📊 Available Benchmark Tasks
+## Available Benchmark Tasks
 
 ### 1. Nonlinear Transformation (NLT)
 Evaluates the reservoir's ability to perform various nonlinear transformations:
@@ -352,20 +411,41 @@ Maps the memory-nonlinearity trade-off surface:
 
 **Output:** Capacity matrix C(τ, ν) revealing trade-offs
 
-### 5. Sin(x) Approximation
+### 5. Information Processing Capacity (IPC)
+Comprehensive capacity framework from Dambre et al. (2012):
+
+**Task:** Measure capacity using Legendre polynomial basis functions
+
+**Output:**
+- Total capacity (bounded by N nodes)
+- Linear memory capacity (degree-1 polynomials)
+- Nonlinear capacity (degree > 1 polynomials)
+- Capacity decomposition by delay and polynomial degree
+
+**Reference:** Dambre et al., "Information Processing Capacity of Dynamical Systems", Scientific Reports 2, 514 (2012)
+
+### 6. Sin(x) Approximation
 Tests ability to compute nonlinear functions:
 
 **Task:** Transform input signal x to sin(x)
 
-### 6. Kernel Rank
+### 7. Kernel Rank
 Evaluates the effective dimensionality and nonlinearity of the reservoir's kernel matrix.
 
-### 7. Generalization Rank
-Assesses how well the reservoir generalizes across similar datasets.
+**Implementation:** Based on Wringe et al. (2025) "Reservoir Computing Benchmarks: a tutorial review and critique"
+
+**Features:**
+- Combined mode: Includes input signal with reservoir states
+- Nodes-only mode: Uses only reservoir node outputs
+- Linear and RBF kernel options
+- Efficient N×N computation (instead of T×T) for linear kernels
+
+### 8. Generalization Rank
+Assesses how well the reservoir generalizes across similar datasets using SVD-based rank computation.
 
 ---
 
-## 🎨 Visualization System
+## Visualization System
 
 RCbench features a unified visualization system with task-specific plotters:
 
@@ -374,34 +454,33 @@ RCbench features a unified visualization system with task-specific plotters:
 Each task has a configuration class to control plotting:
 
 ```python
-from rcbench.visualization.plot_config import (
+from rcbench import (
     NLTPlotConfig,
     MCPlotConfig,
     NarmaPlotConfig,
     SinxPlotConfig,
-    NonlinearMemoryPlotConfig
+    NonlinearMemoryPlotConfig,
+    IPCPlotConfig
 )
 
-# Example: NLT configuration
-plot_config = NLTPlotConfig(
+# Example: IPC configuration
+plot_config = IPCPlotConfig(
     figsize=(10, 6),
     dpi=100,
     save_dir="./plots",
     show_plot=True,
     
+    # IPC-specific plots
+    plot_capacity_by_degree=True,
+    plot_tradeoff=True,
+    plot_summary=True,
+    
     # General plots
     plot_input_signal=True,
     plot_output_responses=True,
     plot_nonlinearity=True,
-    plot_frequency_analysis=True,
     
-    # Task-specific plots
-    plot_target_prediction=True,
-    
-    # Styling
-    nonlinearity_plot_style='scatter',
-    frequency_range=(0, 50),
-    prediction_sample_count=200
+    train_ratio=0.8
 )
 ```
 
@@ -419,11 +498,12 @@ For each task, RCbench can generate:
    - NLT: Target transformations and predictions
    - Memory Capacity: MC vs delay curves, cumulative MC
    - Nonlinear Memory: Capacity heatmaps, trade-off curves
+   - IPC: Capacity by degree, memory-nonlinearity trade-off
    - NARMA: Time series predictions with error analysis
 
 ---
 
-## 🔬 Dataset Classes
+## Dataset Classes
 
 ### ElecResDataset
 
@@ -473,7 +553,7 @@ dataframe = dataset.dataframe
 
 ---
 
-## 🧪 Feature Selection
+## Feature Selection
 
 RCbench includes flexible feature selection:
 
@@ -497,7 +577,7 @@ selected_names = evaluator.selected_feature_names  # Names
 
 ---
 
-## 📝 Logging
+## Logging
 
 RCbench uses a custom logger with different levels:
 
@@ -523,7 +603,54 @@ logger.error("Error message")
 
 ---
 
-## 🧑‍💻 Contributing
+## Framework Integration
+
+### ReservoirPy
+
+RCbench integrates with [ReservoirPy](https://github.com/reservoirpy/reservoirpy) for simulating Echo State Networks:
+
+```python
+from reservoirpy.nodes import Reservoir
+from rcbench import MemoryCapacityEvaluator, SinxEvaluator
+
+# Create and run ReservoirPy reservoir
+reservoir = Reservoir(units=100, lr=0.3, sr=0.9)
+states = reservoir.run(input_signal.reshape(-1, 1))
+
+# Benchmark with RCbench
+evaluator = MemoryCapacityEvaluator(
+    input_signal=input_signal,
+    nodes_output=np.array(states),
+    max_delay=30
+)
+```
+
+See `rcbench/examples/example_reservoirpy.py` for a complete example.
+
+### PRCpy
+
+RCbench integrates with [PRCpy](https://github.com/PRCpy/PRCpy) for processing physical reservoir computing data:
+
+```python
+from prcpy.RC import Pipeline
+from rcbench import MemoryCapacityEvaluator
+
+# Process data with PRCpy pipeline
+# ...
+
+# Benchmark with RCbench
+evaluator = MemoryCapacityEvaluator(
+    input_signal=input_signal,
+    nodes_output=readout_matrix,
+    max_delay=30
+)
+```
+
+See `rcbench/examples/example_prcpy.py` for a complete example.
+
+---
+
+## Contributing
 
 Contributions are welcome! Please follow these steps:
 
@@ -549,16 +676,17 @@ pytest tests/
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 For detailed documentation on specific tasks:
-- See `rcbench/tasks/NONLINEARMEMORY_README.md` for the Nonlinear Memory benchmark
+- See `rcbench/tasks/taskManuals/NONLINEARMEMORY_README.md` for the Nonlinear Memory benchmark
+- See `rcbench/tasks/taskManuals/IPC_README.md` for the Information Processing Capacity evaluator
 - Check example scripts in `rcbench/examples/` for usage patterns
 - Each task class includes comprehensive docstrings
 
 ---
 
-## 🐛 Issues & Support
+## Issues & Support
 
 - **Issue Tracker:** https://github.com/nanotechdave/RCbench/issues
 - **Pull Requests:** https://github.com/nanotechdave/RCbench/pulls
@@ -566,25 +694,25 @@ For detailed documentation on specific tasks:
 
 ---
 
-## 📜 License
+## License
 
 RCbench is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 👥 Authors
+## Authors
 
 - **Davide Pilati** - *Initial work* - [nanotechdave](https://github.com/nanotechdave)
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-This toolkit was developed at Politecnico di Torino and INRiM for benchmarking physical reservoir computing systems, particularly nanowire networks and other unconventional computing substrates.
+This work was developed in collaboration between the Italian National Institute of Metrology (INRiM), Polytechnic of Turin and University of Pisa. This work was funded by the Europen Union (ERC, "MEMBRAIN", No. 101160604), website: https://membrain-eu.com, and NEURONE, a project funded by the European Union - Next Generation EU, M4C1 CUP I53D23003600006, under program PRIN 2022 (prj code 20229JRTZA). Views and opinions expressed are however those of the authors only and do not necessarily reflect those of the European Union or the European Research Council. Neither the European Union nor the granting authority can be held responsible for them.
 
 ---
 
-## 📖 Citation
+## Citation
 
 If you use RCbench in your research, please cite:
 
@@ -594,11 +722,25 @@ If you use RCbench in your research, please cite:
   title = {RCbench: Reservoir Computing Benchmark Toolkit},
   year = {2025},
   url = {https://github.com/nanotechdave/RCbench},
-  version = {0.1.20}
+  version = {0.1.50}
 }
 ```
 
 ---
 
-**Version:** 0.1.20  
-**Last Updated:** November 2025
+## References
+
+Key papers referenced in this implementation:
+
+1. Dambre, J., Verstraeten, D., Schrauwen, B. & Massar, S. "Information Processing Capacity of Dynamical Systems". *Scientific Reports* 2, 514 (2012).
+
+2. Jaeger, H. "Short Term Memory in Echo State Networks". Fraunhofer Institute AIS, Tech. rep. 152 (2002).
+
+3. Wringe, C., Trefzer, M., & Stepney, S. "Reservoir Computing Benchmarks: a tutorial review and critique". arXiv:2405.06561 (2025).
+
+4. Dale, M., Miller, J.F., Stepney, S. & Trefzer, M.A. "A substrate-independent framework to characterize reservoir computers". *Proc. R. Soc. A* 475 (2019).
+
+---
+
+**Version:** 0.1.50  
+**Last Updated:** January 2026

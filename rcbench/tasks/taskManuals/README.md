@@ -38,13 +38,23 @@ This directory contains comprehensive manuals for each benchmark task in RCbench
 
 ### Specialized Tasks
 
-6. **Kernel Rank** (Documentation in progress)
-   - Evaluates kernel quality and nonlinearity
-   - Use case: Measure reservoir dimensionality
+6. **[Kernel Rank](KERNELRANK_README.md)**
+   - Evaluates effective dimensionality of reservoir state space
+   - Measures computational capacity via SVD analysis
+   - Difficulty: Easy
+   - Use case: Measure reservoir dimensionality and linear independence
 
-7. **Generalization Rank** (Documentation in progress)
-   - Assesses cross-dataset generalization
-   - Use case: Test robustness and adaptability
+7. **[Generalization Rank](GENERALIZATIONRANK_README.md)**
+   - Assesses noise robustness across multiple input variants
+   - Measures how similar outputs are for noisy versions of the same input
+   - Difficulty: Moderate (requires multiple trials)
+   - Use case: Test robustness and generalization capability
+
+8. **[Information Processing Capacity (IPC)](IPC_README.md)**
+   - Comprehensive computational capacity measure
+   - Decomposes capacity into linear memory and nonlinear components
+   - Difficulty: Comprehensive (many basis functions)
+   - Use case: Full characterization of reservoir computing capabilities
 
 ## Quick Reference
 
@@ -57,8 +67,9 @@ This directory contains comprehensive manuals for each benchmark task in RCbench
 | **Nonlinear Memory** | High | High | Yes | Comprehensive characterization |
 | **NARMA** | High | High | Yes | Standard benchmark, temporal dynamics |
 | **Sin(x)** | Low | High | No | Function approximation |
-| **Kernel Rank** | Low | High | No | Dimensionality assessment |
-| **Generalization Rank** | Medium | Medium | Yes | Robustness testing |
+| **Kernel Rank** | N/A | N/A | No | State space dimensionality, computational capacity |
+| **Generalization Rank** | N/A | N/A | No | Noise robustness, input discrimination |
+| **IPC** | High | High | Yes | Complete capacity characterization |
 
 ### Typical Performance Metrics (NMSE)
 
@@ -69,8 +80,12 @@ This directory contains comprehensive manuals for each benchmark task in RCbench
 | **NARMA-2** | < 0.05 | 0.05-0.15 | 0.15-0.30 | > 0.30 |
 | **NARMA-10** | < 0.10 | 0.10-0.30 | 0.30-0.50 | > 0.50 |
 | **Sin(x)** | < 0.05 | 0.05-0.15 | 0.15-0.30 | > 0.30 |
+| **Kernel Rank*** | ≈ N | 0.7N-0.9N | 0.4N-0.7N | < 0.4N |
+| **Generalization Rank*** | < 0.2 | 0.2-0.4 | 0.4-0.6 | > 0.6 |
+| **IPC** | ≈ N | 0.7N-0.9N | 0.4N-0.7N | < 0.4N |
 
-*N = number of reservoir nodes for Memory Capacity
+*N = number of reservoir nodes (or N+1 for Kernel Rank with input included)
+*For Generalization Rank, values are GR/min(m,n) ratio where lower is better (stronger generalization)
 
 ### Common Parameters
 
@@ -279,7 +294,7 @@ To add documentation for new tasks:
 
 ## Version Information
 
-These manuals are for RCbench version 0.1.20
+These manuals are for RCbench version 0.1.40+
 
-Last updated: January 2025
+Last updated: January 2026
 

@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-0.1.50-green)
+![Version](https://img.shields.io/badge/version-1.0.0-green)
 
 **RCbench (Reservoir Computing Benchmark Toolkit)** is a comprehensive Python package for evaluating and benchmarking reservoir computing systems. It provides standardized tasks, flexible visualization tools, and efficient evaluation methods for both physical and simulated reservoirs.
 
@@ -728,5 +728,5 @@ If you use RCbench in your research, please cite:
 
 ---
 
-**Version:** 0.1.50  
-**Last Updated:** November 2025
+**Version:** 1.0.0  
+**Last Updated:** February 2026

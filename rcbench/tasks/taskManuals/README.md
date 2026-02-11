@@ -294,7 +294,7 @@ To add documentation for new tasks:
 
 ## Version Information
 
-These manuals are for RCbench version 0.1.40+
+These manuals are for RCbench version 1.0.0
 
 Last updated: January 2026
 

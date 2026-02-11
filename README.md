@@ -702,7 +702,7 @@ RCbench is licensed under the MIT License. See the [LICENSE](LICENSE) file for d
 
 ## Authors
 
-- **Davide Pilati** - *Initial work* - [nanotechdave](https://github.com/nanotechdave)
+- **Davide Pilati**  - [nanotechdave](https://github.com/nanotechdave)
 
 ---
 
@@ -717,12 +717,12 @@ This work was developed in collaboration between the Italian National Institute 
 If you use RCbench in your research, please cite:
 
 ```bibtex
-@software{rcbench2025,
-  author = {Pilati, Davide},
-  title = {RCbench: Reservoir Computing Benchmark Toolkit},
-  year = {2025},
-  url = {https://github.com/nanotechdave/RCbench},
-  version = {0.1.50}
+@article{rcbench2025,
+    author={Pilati, Davide and Ceni, Andrea and Michieletti, Fabio and Gallicchio, Claudio and Ricciardi, Carlo and Milano, Gianluca},
+	title={RCbench: a unified framework for benchmarking reservoir computing systems},
+	journal={Neuromorphic Computing and Engineering},
+	url={http://iopscience.iop.org/article/10.1088/2634-4386/ae441f},
+	year={2026},
 }
 ```
 

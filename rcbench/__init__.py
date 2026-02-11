@@ -1,4 +1,4 @@
-__version__ = "0.1.50"
+__version__ = "1.0.0"
 
 from .utils import utils
 from .tasks.nlt import NltEvaluator

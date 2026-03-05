@@ -1,6 +1,9 @@
 """
 C. elegans Biological Reservoir Use-Case (MC, IPC, KR, GR)
 
+Author: Miles Churchland
+Date: 2026-03-05
+
 This self-running example shows how to:
 1. Load a C. elegans connectome adjacency from local `.npy` files.
 2. Preprocess structure (gap-junction duplication, isolated-node removal).
@@ -10,23 +13,20 @@ This self-running example shows how to:
    Kernel Rank (KR), and Generalization Rank (GR).
 
 Expected files in `rcbench/examples/data`:
-- `ce_adj.npy` 
-"""
+- `ce_adj.npy`
 
-from __future__ import annotations
+Data provenance:
+- `ce_adj.npy` is derived from the OpenWorm c302 table:
+  https://github.com/openworm/c302/blob/master/c302/CElegansNeuronTables.xls
+"""
 
 import argparse
 import logging
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 
 import numpy as np
-
-# Allow running the example directly from source without installing the package.
-if __package__ is None or __package__ == "":
-    sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from rcbench import (
     GeneralizationRankEvaluator,
@@ -55,6 +55,8 @@ class ExampleConfig:
     ipc_max_degree: int = 3
     ridge_alpha: float = 0.1
     train_ratio: float = 0.8
+    gr_num_trials: int = 20
+    gr_threshold: float = 1e-3
 
 
 def load_connectome_adjacency(data_dir: Path) -> Tuple[np.ndarray, str]:
@@ -65,7 +67,7 @@ def load_connectome_adjacency(data_dir: Path) -> Tuple[np.ndarray, str]:
     if not adj_path.exists():
         raise FileNotFoundError(f"Missing required data file: {adj_path}")
 
-    adj = np.load(adj_path).astype(np.float64, copy=False)
+    adj = np.load(adj_path, allow_pickle=False).astype(np.float64, copy=False)
     if adj.ndim != 2 or adj.shape[0] != adj.shape[1]:
         raise ValueError(f"Adjacency must be square, got shape {adj.shape}")
 
@@ -166,23 +168,10 @@ def run_example(
     win = sample_input_weights(W.shape[0], config.input_scale, rng)
 
     states_clean = run_reservoir(W, win, input_signal, config.leak_rate)
-    noisy_input = np.clip(
-        input_signal + config.perturb_std * rng.normal(size=input_signal.shape),
-        -1.0,
-        1.0,
-    )
-    states_noisy = run_reservoir(W, win, noisy_input, config.leak_rate)
 
     # Wash out initial transient before RCbench evaluation.
     eval_input = input_signal[config.washout:]
     eval_states = states_clean[config.washout:]
-
-    # For GR, use the state difference between clean and noisy drives.
-    train_len = int((config.total_steps - config.washout) * config.train_ratio)
-    delta_states = (
-        states_noisy[config.washout : config.washout + train_len]
-        - states_clean[config.washout : config.washout + train_len]
-    )
 
     mc_eval = MemoryCapacityEvaluator(
         input_signal=eval_input,
@@ -223,7 +212,21 @@ def run_example(
     )
     kr_results = kr_eval.run_evaluation()
 
-    gr_eval = GeneralizationRankEvaluator(states=delta_states, threshold=1e-3)
+    # GR uses multiple noisy input trials. Each row is one trial's n-dimensional state.
+    gr_states = np.zeros((config.gr_num_trials, W.shape[0]), dtype=np.float64)
+    for i in range(config.gr_num_trials):
+        noisy_input = np.clip(
+            input_signal + config.perturb_std * rng.normal(size=input_signal.shape),
+            -1.0,
+            1.0,
+        )
+        trial_states = run_reservoir(W, win, noisy_input, config.leak_rate)
+        gr_states[i] = np.mean(trial_states[config.washout :], axis=0)
+
+    gr_eval = GeneralizationRankEvaluator(
+        states=gr_states,
+        threshold=config.gr_threshold,
+    )
     gr_results = gr_eval.run_evaluation()
 
     print("=" * 72)
@@ -244,7 +247,10 @@ def run_example(
     print(f"  IPC (total): {ipc_results['total_capacity']:.4f}")
     print(f"  IPC linear memory component: {ipc_results['linear_memory_capacity']:.4f}")
     print(f"  KR  (combined input+nodes): {kr_results['kernel_rank']}")
-    print(f"  GR  (noise-difference states): {gr_results['generalization_rank']}")
+    print(
+        "  GR  (noisy-trial mean states): "
+        f"{gr_results['generalization_rank']} (trials={config.gr_num_trials})"
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -276,5 +282,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-##please check out my papers!! https://doi.org/10.1016/j.isci.2025.114436
-#and soon to be preprint Determinants of Hyperparameter Invariance in Connectome Reservoir Computing by Miles Churchland

@@ -10,7 +10,7 @@ This self-running example shows how to:
    Kernel Rank (KR), and Generalization Rank (GR).
 
 Expected files in `rcbench/examples/data`:
-- `ce_adj.npy` or `ce_adj_strip.npy`
+- `ce_adj.npy` 
 """
 
 from __future__ import annotations
@@ -57,9 +57,9 @@ class ExampleConfig:
     train_ratio: float = 0.8
 
 
-def load_connectome_adjacency(data_dir: Path, use_strip: bool) -> Tuple[np.ndarray, str]:
+def load_connectome_adjacency(data_dir: Path) -> Tuple[np.ndarray, str]:
     """Load adjacency matrix from local `.npy` files."""
-    suffix = "_strip" if use_strip else ""
+    suffix = ""
     adj_path = data_dir / f"ce_adj{suffix}.npy"
 
     if not adj_path.exists():
@@ -150,11 +150,10 @@ def run_example(
     config: ExampleConfig,
     duplicate_gap_junctions: bool,
     drop_isolated: bool,
-    use_strip: bool,
 ) -> None:
     data_dir = Path(__file__).resolve().parent / "data"
 
-    raw_adj, source_label = load_connectome_adjacency(data_dir=data_dir, use_strip=use_strip)
+    raw_adj, source_label = load_connectome_adjacency(data_dir=data_dir)
     W_gapped, gap_pair_count = apply_gap_duplication(raw_adj, duplicate_gap_junctions)
     W_pre, removed_count = drop_isolated_nodes(W_gapped, drop_isolated)
 
@@ -262,11 +261,6 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Keep isolated nodes instead of dropping them.",
     )
-    parser.add_argument(
-        "--use-strip",
-        action="store_true",
-        help="Use ce_adj_strip.npy instead of ce_adj.npy.",
-    )
     return parser.parse_args()
 
 
@@ -277,7 +271,6 @@ def main() -> None:
         config=config,
         duplicate_gap_junctions=not args.no_gap_duplication,
         drop_isolated=not args.keep_isolated,
-        use_strip=args.use_strip,
     )
 
 

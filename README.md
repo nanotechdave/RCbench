@@ -73,10 +73,13 @@ RCbench/
 │   │   ├── example_ipc.py           # Information Processing Capacity
 │   │   ├── example_KR.py            # Kernel Rank
 │   │   ├── example_KR_matrix.py     # Kernel Rank with synthetic data
+│   │   ├── example_celegans_biological.py # C. elegans biological reservoir use-case
 │   │   ├── example_reservoirpy.py   # ReservoirPy ESN integration
 │   │   ├── example_prcpy.py         # PRCpy integration
 │   │   ├── benchmark_evaluators.py  # Performance benchmarking
-│   │   └── examplePCA.py            # Feature selection example
+│   │   ├── examplePCA.py            # Feature selection example
+│   │   └── data/                    # Example connectome fixtures
+│   │       └── ce_adj.npy / ce_adj_strip.npy
 │   ├── measurements/                # Data handling
 │   │   ├── __init__.py
 │   │   ├── dataset.py               # ReservoirDataset and ElecResDataset classes

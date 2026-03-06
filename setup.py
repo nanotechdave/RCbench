@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="rcbench",
-    version="1.0.0",
+    version="1.0.10",
     description="Reservoir computing benchmark toolkit",
     #package_dir={"":"rcbench"},
     packages=find_packages(),

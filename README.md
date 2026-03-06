@@ -651,6 +651,8 @@ evaluator = MemoryCapacityEvaluator(
 
 See `rcbench/examples/example_prcpy.py` for a complete example.
 
+> **Reference:** Youel, H. et al. (2024). "PRCpy: A Python Package for Processing of Physical Reservoir Computing". [arXiv:2410.18356](https://arxiv.org/abs/2410.18356)
+
 ---
 
 ## Contributing

@@ -15,6 +15,12 @@ Requirements:
 
 PRCpy Documentation: https://pypi.org/project/prcpy/
 
+Reference:
+    Youel, H., Prestwood, D., Lee, O., Wei, T., Stenning, K. D., Gartside, J. C.,
+    Branford, W. R., Everschor-Sitte, K., & Kurebayashi, H. (2024).
+    "PRCpy: A Python Package for Processing of Physical Reservoir Computing".
+    arXiv:2410.18356. https://arxiv.org/abs/2410.18356
+
 Author: Davide Pilati
 Date: 2025
 """

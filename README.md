@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-1.0.0-green)
+![Version](https://img.shields.io/badge/version-1.0.10-green)
 
 **RCbench (Reservoir Computing Benchmark Toolkit)** is a comprehensive Python package for evaluating and benchmarking reservoir computing systems. It provides standardized tasks, flexible visualization tools, and efficient evaluation methods for both physical and simulated reservoirs.
 
@@ -73,10 +73,13 @@ RCbench/
 │   │   ├── example_ipc.py           # Information Processing Capacity
 │   │   ├── example_KR.py            # Kernel Rank
 │   │   ├── example_KR_matrix.py     # Kernel Rank with synthetic data
+│   │   ├── example_celegans_biological.py # C. elegans biological reservoir use-case
 │   │   ├── example_reservoirpy.py   # ReservoirPy ESN integration
 │   │   ├── example_prcpy.py         # PRCpy integration
 │   │   ├── benchmark_evaluators.py  # Performance benchmarking
-│   │   └── examplePCA.py            # Feature selection example
+│   │   ├── examplePCA.py            # Feature selection example
+│   │   └── data/                    # Example connectome fixtures
+│   │       └── ce_adj.npy / ce_adj_strip.npy
 │   ├── measurements/                # Data handling
 │   │   ├── __init__.py
 │   │   ├── dataset.py               # ReservoirDataset and ElecResDataset classes
@@ -648,6 +651,8 @@ evaluator = MemoryCapacityEvaluator(
 
 See `rcbench/examples/example_prcpy.py` for a complete example.
 
+> **Reference:** Youel, H. et al. (2024). "PRCpy: A Python Package for Processing of Physical Reservoir Computing". [arXiv:2410.18356](https://arxiv.org/abs/2410.18356)
+
 ---
 
 ## Contributing
@@ -728,5 +733,5 @@ If you use RCbench in your research, please cite:
 
 ---
 
-**Version:** 1.0.0  
-**Last Updated:** February 2026
+**Version:** 1.0.10
+**Last Updated:** March 2026
